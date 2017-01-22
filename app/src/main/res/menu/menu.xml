@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/changeImage"
+          android:title="@string/message_ChangeImage">
+            <menu>
+                <item android:id="@+id/hamster"
+                      android:title="@string/message_Hamster"
+                      android:onClick="onOptionsItem"/>
+                <item android:id="@+id/smarties"
+                      android:title="@string/message_Smarties"
+                      android:onClick="onOptionsItem"/>
+            </menu>
+    </item>
+
+    <item android:id="@+id/gray"
+          android:title="@string/message_Gray"
+          android:onClick="onOptionsItem"/>
+
+    <item android:id="@+id/teinte"
+          android:title="@string/message_Teinte">
+        <menu>
+            <item android:id="@+id/random"
+                  android:title="@string/message_Random"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/red"
+                  android:title="@string/message_Red"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/green"
+                  android:title="@string/message_Green"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/blue"
+                  android:title="@string/message_Blue"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/sepia"
+                  android:title="@string/message_Sepia"
+                  android:onClick="onOptionsItem"/>
+        </menu>
+    </item>
+
+    <item android:id="@+id/contrast"
+          android:title="@string/message_Contrast"
+          android:onClick="onOptionsItem"/>
+
+    <item android:id="@+id/zoom"
+          android:title="@string/message_Zoom"
+          android:onClick="onOptionsItem"/>
+
+    <item android:id="@+id/domin"
+          android:title="@string/message_Domin"
+          android:onClick="onOptionsItem"/>
+
+</menu>

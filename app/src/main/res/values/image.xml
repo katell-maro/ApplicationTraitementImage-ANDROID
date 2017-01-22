@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="image_hamster">R.drawable.hamster</string>
+    <string name="image_smarty">R.drawable.smarty</string>
+
+</resources>

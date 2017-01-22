@@ -1,0 +1,18 @@
+<resources>
+
+    <string name="app_name">PhotArt</string>
+    <string name="message_Gray">Griser</string>
+    <string name="message_Blue">Bleu</string>
+    <string name="message_Green">Vert</string>
+    <string name="message_Red">Rouge</string>
+    <string name="message_Random">Random</string>
+    <string name="message_Domin">Surprise</string>
+    <string name="message_Hamster">Hamster</string>
+    <string name="message_Smarties">Smarties</string>
+    <string name="message_Contrast">Contraste</string>
+    <string name="message_Sepia">Sepia</string>
+    <string name="message_Zoom">Zoom</string>
+    <string name="message_Teinte">Teinte</string>
+    <string name="message_ChangeImage">Changer image</string>
+
+</resources>
