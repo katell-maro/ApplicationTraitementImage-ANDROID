@@ -11,6 +11,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import static android.graphics.Bitmap.createBitmap;
 import static com.example.katell.myapplication.R.id.imageView;
@@ -120,6 +121,11 @@ public class MainActivity extends AppCompatActivity {
                 bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.smarty);
                 bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                 imageView.setImageBitmap(bitmap);
+                break;
+
+            //permet de lancer un Toast secret
+            case R.id.secret:
+                Toast.makeText(this, "It works", Toast.LENGTH_SHORT).show();
                 break;
         }
     }
