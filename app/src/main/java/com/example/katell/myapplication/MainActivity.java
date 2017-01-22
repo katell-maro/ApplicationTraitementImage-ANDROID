@@ -125,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
 
             //permet de lancer un Toast secret
             case R.id.secret:
-                Toast.makeText(this, "It works", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "It works !", Toast.LENGTH_SHORT).show();
                 break;
         }
     }
