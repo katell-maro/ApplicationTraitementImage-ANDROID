@@ -53,4 +53,8 @@
           android:title="@string/message_Domin"
           android:onClick="onOptionsItem"/>
 
+    <item android:id="@+id/photo"
+          android:title="@string/message_Photo"
+          android:onClick="onOptionsItem"/>
+
 </menu>
