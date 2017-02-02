@@ -57,4 +57,8 @@
           android:title="@string/message_Photo"
           android:onClick="onOptionsItem"/>
 
+    <item android:id="@+id/brightness"
+          android:title="@string/message_Brightness"
+          android:onClick="onOptionsItem"/>
+
 </menu>

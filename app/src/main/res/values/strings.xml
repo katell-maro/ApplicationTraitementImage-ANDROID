@@ -15,5 +15,6 @@
     <string name="message_Teinte">Teinte</string>
     <string name="message_ChangeImage">Changer image</string>
     <string name="message_Photo">Prendre une photo</string>
+    <string name="message_Brightness">Luminosite</string>
 
 </resources>

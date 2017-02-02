@@ -142,6 +142,11 @@ public class MainActivity extends AppCompatActivity {
             case R.id.photo:
                 takeImageFromCamera();
                 break;
+
+            //permet de regler la luminosite
+            case R.id.brightness:
+                brightness(0);
+                break;
         }
     }
 
@@ -379,6 +384,30 @@ public class MainActivity extends AppCompatActivity {
             imageView.setImageBitmap(imageBitmap);
         }
     }
+
+
+
+    protected void brightness(int value) {
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
+        int[] pixels = new int[height*width];
+        bitmap.getPixels(pixels,0,width,0,0,width,height);
+        int color;
+
+        for (int i=0 ; i<pixels.length ; i++) {
+            float[] hsv = new float[3];
+            color = pixels[i];
+            Color.colorToHSV(color, hsv);
+            hsv[2] = hsv[2]*value;
+            color = Color.HSVToColor(hsv);
+            pixels[i] = color;
+        }
+
+        bitmap.setPixels(pixels,0,width,0,0,width,height);
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        imageView.setImageBitmap(bitmap);
+    }
+
 
 
     /**
