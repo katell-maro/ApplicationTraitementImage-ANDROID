@@ -1,5 +1,7 @@
 package com.example.katell.myapplication;
 
+import android.app.ActionBar;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,6 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import java.io.File;
@@ -145,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 
             //permet de regler la luminosite
             case R.id.brightness:
-                brightness(0);
+                brightness();
                 break;
         }
     }
@@ -386,21 +389,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Permet d'afficher la seekBar et de renvoyer vers l'algo quand la seekBar change
+     */
+    protected void brightness() {
+        SeekBar seekBar = (SeekBar)findViewById(R.id.seekBar);
 
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                brightness(progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+    }
+
+
+    /**
+     * Algo pour changer la luminosite
+     * @param value
+     */
     protected void brightness(int value) {
         int height = bitmap.getHeight();
         int width = bitmap.getWidth();
         int[] pixels = new int[height*width];
         bitmap.getPixels(pixels,0,width,0,0,width,height);
-        int color;
 
         for (int i=0 ; i<pixels.length ; i++) {
             float[] hsv = new float[3];
-            color = pixels[i];
-            Color.colorToHSV(color, hsv);
-            hsv[2] = hsv[2]*value;
-            color = Color.HSVToColor(hsv);
-            pixels[i] = color;
+            Color.colorToHSV(pixels[i], hsv);
+            hsv[2] = (float) (hsv[2]*value/(100*0.5));
+            pixels[i] = Color.HSVToColor(hsv);
         }
 
         bitmap.setPixels(pixels,0,width,0,0,width,height);
