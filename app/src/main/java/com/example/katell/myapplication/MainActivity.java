@@ -398,7 +398,21 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                brightness(progress);
+                int height = bitmap.getHeight();
+                int width = bitmap.getWidth();
+                int[] pixels = new int[height*width];
+                bitmap.getPixels(pixels,0,width,0,0,width,height);
+                float[] hsv = new float[3];
+
+                for (int i=0 ; i<pixels.length ; i++) {
+                    Color.colorToHSV(pixels[i], hsv);
+                    hsv[2] = (float) (hsv[2]*progress/(100*0.5));
+                    pixels[i] = Color.HSVToColor(hsv);
+                }
+
+                bitmap.setPixels(pixels,0,width,0,0,width,height);
+                ImageView imageView = (ImageView) findViewById(R.id.imageView);
+                imageView.setImageBitmap(bitmap);
             }
 
             @Override
@@ -414,14 +428,14 @@ public class MainActivity extends AppCompatActivity {
      * Algo pour changer la luminosite
      * @param value
      */
-    protected void brightness(int value) {
+   /* protected void brightness(int value) {
         int height = bitmap.getHeight();
         int width = bitmap.getWidth();
         int[] pixels = new int[height*width];
         bitmap.getPixels(pixels,0,width,0,0,width,height);
+        float[] hsv = new float[3];
 
         for (int i=0 ; i<pixels.length ; i++) {
-            float[] hsv = new float[3];
             Color.colorToHSV(pixels[i], hsv);
             hsv[2] = (float) (hsv[2]*value/(100*0.5));
             pixels[i] = Color.HSVToColor(hsv);
@@ -430,7 +444,7 @@ public class MainActivity extends AppCompatActivity {
         bitmap.setPixels(pixels,0,width,0,0,width,height);
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
         imageView.setImageBitmap(bitmap);
-    }
+    }*/
 
 
 
