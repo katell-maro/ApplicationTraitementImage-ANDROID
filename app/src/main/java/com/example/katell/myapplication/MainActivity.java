@@ -382,7 +382,11 @@ public class MainActivity extends AppCompatActivity {
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
             this.bitmap = imageBitmap;
-            bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inMutable = true;
+            options.inScaled = false;
+            //bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+
             ImageView imageView = (ImageView) findViewById(R.id.imageView);
             imageView.setImageBitmap(imageBitmap);
         }
