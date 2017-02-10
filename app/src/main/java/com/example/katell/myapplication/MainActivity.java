@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -35,11 +36,16 @@ public class MainActivity extends AppCompatActivity {
      * Attribut correspondant au bitmap contenue dans l'ImageView
      */
     protected Bitmap bitmap;
+    SeekBar seekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //Cacher le seekBar
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        seekBar.setVisibility(View.INVISIBLE);
 
         //imageView : initialisation
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
@@ -72,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
      * @param item
      */
     public void onOptionsItem(MenuItem item) {
+        seekBar.setVisibility(View.INVISIBLE);
+
         switch (item.getItemId()) {
 
             //pour griser
@@ -392,31 +400,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     /**
      * Permet d'afficher la seekBar et de renvoyer vers l'algo quand la seekBar change
      */
     protected void brightness() {
-        SeekBar seekBar = (SeekBar)findViewById(R.id.seekBar);
+        seekBar.setVisibility(View.VISIBLE);
+        seekBar.setProgress(50);
+        seekBar.setMax(100);
+        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_brightness_low_black_24dp));
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int height = bitmap.getHeight();
-                int width = bitmap.getWidth();
-                int[] pixels = new int[height*width];
-                bitmap.getPixels(pixels,0,width,0,0,width,height);
-                float[] hsv = new float[3];
-
-                for (int i=0 ; i<pixels.length ; i++) {
-                    Color.colorToHSV(pixels[i], hsv);
-                    hsv[2] = (float) (hsv[2]*progress/(100*0.5));
-                    pixels[i] = Color.HSVToColor(hsv);
-                }
-
-                bitmap.setPixels(pixels,0,width,0,0,width,height);
-                ImageView imageView = (ImageView) findViewById(R.id.imageView);
-                imageView.setImageBitmap(bitmap);
+                brightness(progress);
             }
 
             @Override
@@ -432,7 +428,8 @@ public class MainActivity extends AppCompatActivity {
      * Algo pour changer la luminosite
      * @param value
      */
-   /* protected void brightness(int value) {
+    protected void brightness(int value) {
+        float valueF = (float) value;
         int height = bitmap.getHeight();
         int width = bitmap.getWidth();
         int[] pixels = new int[height*width];
@@ -441,14 +438,14 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i=0 ; i<pixels.length ; i++) {
             Color.colorToHSV(pixels[i], hsv);
-            hsv[2] = (float) (hsv[2]*value/(100*0.5));
+            hsv[2] = hsv[2]*value/50;
             pixels[i] = Color.HSVToColor(hsv);
         }
 
         bitmap.setPixels(pixels,0,width,0,0,width,height);
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
         imageView.setImageBitmap(bitmap);
-    }*/
+    }
 
 
 
