@@ -35,30 +35,27 @@
             <item android:id="@+id/sepia"
                   android:title="@string/message_Sepia"
                   android:onClick="onOptionsItem"/>
-            <item android:id="@+id/secret"
-                  android:title="Trop secret !"
-                  android:onClick="onOptionsItem"/>
         </menu>
     </item>
 
+    <item android:id="@+id/brightness"
+          android:title="@string/message_Brightness"
+          android:onClick="onOptionsItem"/>
+
     <item android:id="@+id/contrast"
           android:title="@string/message_Contrast"
+          android:onClick="onOptionsItem"/>
+
+    <item android:id="@+id/histogram"
+          android:title="@string/message_Histogram"
           android:onClick="onOptionsItem"/>
 
     <item android:id="@+id/zoom"
           android:title="@string/message_Zoom"
           android:onClick="onOptionsItem"/>
 
-    <item android:id="@+id/domin"
-          android:title="@string/message_Domin"
-          android:onClick="onOptionsItem"/>
-
     <item android:id="@+id/photo"
           android:title="@string/message_Photo"
-          android:onClick="onOptionsItem"/>
-
-    <item android:id="@+id/brightness"
-          android:title="@string/message_Brightness"
           android:onClick="onOptionsItem"/>
 
 </menu>

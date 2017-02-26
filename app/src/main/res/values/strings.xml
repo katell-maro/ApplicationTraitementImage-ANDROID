@@ -6,7 +6,6 @@
     <string name="message_Green">Vert</string>
     <string name="message_Red">Rouge</string>
     <string name="message_Random">Random</string>
-    <string name="message_Domin">Surprise</string>
     <string name="message_Hamster">Hamster</string>
     <string name="message_Smarties">Smarties</string>
     <string name="message_Contrast">Contraste</string>
@@ -16,5 +15,6 @@
     <string name="message_ChangeImage">Changer image</string>
     <string name="message_Photo">Prendre une photo</string>
     <string name="message_Brightness">Luminosite</string>
+    <string name="message_Histogram">Egalisation de histogramme</string>
 
 </resources>
