@@ -16,12 +16,10 @@ import android.view.*;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 import static android.graphics.Bitmap.createBitmap;
 import static com.example.katell.myapplication.R.id.imageView;
@@ -38,6 +36,12 @@ public class MainActivity extends AppCompatActivity {
      */
     private static int RESULT_LOAD_IMG = 1;
 
+    /**
+     * Tableau de pixels qui correspond à la precedente bitmap
+     * permet d'enlever le filtre precedent
+     */
+    private int[] bitmapInit;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.hamster,option); //hamster : nom de l'image affiché au lancement de l'application
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         imageView.setImageBitmap(bitmap);
+        recover();
     }
 
 
@@ -123,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
                 bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.hamster);
                 bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                 imageView.setImageBitmap(bitmap);
+                recover();
                 break;
 
             //permet de mettre une image (smarties)
@@ -131,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
                 bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.smarty);
                 bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                 imageView.setImageBitmap(bitmap);
+                recover();
                 break;
 
             //convolution gaussienne
@@ -161,6 +168,20 @@ public class MainActivity extends AppCompatActivity {
             case R.id.gallery:
                 LoadGallery();
                 break;
+
+            //réinitialiser l'image
+            case R.id.init:
+                init();
+                break;
+
+            //Isolation d'une couleur, ici pour la teinte 240 avec une tolérance de 15
+            case R.id.isolate:
+                isolateColor(240,15);
+                break;
+
+            //Sauvegarder une image
+            case R.id.save:
+                Toast.makeText(this, "En construction",Toast.LENGTH_LONG).show();
         }
     }
 
@@ -173,8 +194,8 @@ public class MainActivity extends AppCompatActivity {
      */
     public boolean onTouchEvent(MotionEvent e) { //zoom en appuyant sur l'ecran
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
-        bitmap = drawable.getBitmap();
+        //BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
+        //bitmap = drawable.getBitmap();
         switch (e.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (bitmap != null) {
@@ -269,6 +290,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+    /**
+     * permet de ne garder que la couleur hue avec une erreur de interval
+     * @param hue
+     * @param interval
+     */
+    private void isolateColor(int hue, int interval) {
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
+        int[] pixels = new int[height*width];
+        bitmap.getPixels(pixels,0,width,0,0,width,height);
+        int min = (hue-interval)%360;
+        int max = (hue+interval)%360;
+
+        for (int i=0 ; i<pixels.length ; i++) {
+            int color = pixels[i];
+            float[] hsv = new float[3];
+            Color.colorToHSV(color,hsv);
+
+            if (hsv[0]>max || hsv[0]<min) {
+                int red = Color.red(color);
+                int green = Color.green(color);
+                int blue = Color.blue(color);
+                int gray = (30*red + 59*green + 11*blue)/100;
+                color = Color.rgb(gray,gray,gray);
+            }
+
+            pixels[i] = color;
+        }
+
+        bitmap.setPixels(pixels,0,width,0,0,width,height);
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        imageView.setImageBitmap(bitmap);
+    }
 
 
 
@@ -417,6 +472,8 @@ public class MainActivity extends AppCompatActivity {
                     bitmap = bitmap.copy(Bitmap.Config.ARGB_8888,true);
                     imageView.setImageBitmap(bmp);
 
+                    recover();
+
                 } catch (FileNotFoundException e){
                     e.printStackTrace();
                     Toast.makeText(this, "Unable to open image",Toast.LENGTH_LONG).show();
@@ -424,6 +481,98 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+
+
+    /**
+     * Permet de récupérer l'image initiale
+     */
+    private void recover() {
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
+        bitmapInit = new int[height*width];
+        bitmap.getPixels(bitmapInit,0,width,0,0,width,height);
+    }
+
+
+
+    /**
+     * Permet de réinitialiser l'image
+     */
+    private void init() {
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
+        bitmap.setPixels(bitmapInit,0,width,0,0,width,height);
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        imageView.setImageBitmap(bitmap);
+    }
+
+
+    /**
+     * Recherche pour sauvegarder une image
+     * @param bmp
+     */
+    private void SaveImage(Bitmap bmp){
+
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/saved_images");
+        myDir.mkdirs();
+        Random generator = new Random();
+        int n = 10000;
+        n = generator.nextInt(n);
+        String fname = "Image-"+n+".jpg";
+        File file = new File (myDir, fname);
+        if (file.exists()) file.delete();
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            bmp.compress(Bitmap.CompressFormat.JPEG,90,out);
+            out.flush();
+            out.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED,Uri.parse("file://" + Environment.getExternalStorageDirectory())));
+    }
+      /*  File pictureFile = getOutputMediaFile();
+        if (pictureFile == null) {
+            Log.d(TAG, "Error creating media file, check storage permissions: ");// e.getMessage());
+            return;
+        }
+        try {
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            bmp.compress(Bitmap.CompressFormat.PNG, 90, fos);
+            fos.close();
+        } catch (FileNotFoundException e) {
+            Log.d(TAG, "File not found: " + e.getMessage());
+        } catch (IOException e) {
+            Log.d(TAG, "Error accessing file: " + e.getMessage());
+        }
+    }
+
+    private  File getOutputMediaFile(){
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
+                + "/Android/data/"
+                + getApplicationContext().getPackageName()
+                + "/Files");
+
+        // This location works best if you want the created images to be shared
+        // between applications and persist after your app has been uninstalled.
+
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+            if (! mediaStorageDir.mkdirs()){
+                return null;
+            }
+        }
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+        File mediaFile;
+        String mImageName="MI_"+ timeStamp +".jpg";
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+        return mediaFile;
+    } */
 
 
 

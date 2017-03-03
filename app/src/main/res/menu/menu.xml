@@ -75,4 +75,16 @@
           android:title="@string/message_Gallery"
           android:onClick="onOptionsItem"/>
 
+    <item android:id="@+id/init"
+          android:title="@string/message_Init"
+          android:onClick="onOptionsItem"/>
+
+    <item android:id="@+id/isolate"
+          android:title="@string/message_Isolate"
+          android:onClick="onOptionsItem"/>
+
+    <item android:id="@+id/save"
+          android:title="@string/message_Save"
+          android:onClick="onOptionsItem"/>
+
 </menu>
