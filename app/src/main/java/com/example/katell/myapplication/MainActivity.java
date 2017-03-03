@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -11,15 +12,14 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
+import android.view.*;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -32,6 +32,11 @@ public class MainActivity extends AppCompatActivity {
      * Attribut correspondant au bitmap contenue dans l'ImageView
      */
     protected Bitmap bitmap;
+
+    /**
+     * Sert dans la méthode qui permet de charger une image de la galerie
+     */
+    private static int RESULT_LOAD_IMG = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,14 +107,9 @@ public class MainActivity extends AppCompatActivity {
                 sepia();
                 break;
 
-            //pour ne garder qu'une seule couleur
-            case R.id.domin:
-                dominate();
-                break;
-
             //pour contraster
-            case R.id.contrast:
-                contrast();
+            case R.id.egalisation:
+                egalisation();
                 break;
 
             //pour zoomer (2x)
@@ -133,16 +133,56 @@ public class MainActivity extends AppCompatActivity {
                 imageView.setImageBitmap(bitmap);
                 break;
 
-            //permet de lancer un Toast secret
-            case R.id.secret:
-                Toast.makeText(this, "It works !", Toast.LENGTH_SHORT).show();
+            //convolution gaussienne
+            case R.id.gaussien:
+                int[][] gaussien = new int[][] {{1,2,1},{2,4,2},{1,2,1}}; // 16
+                convolute(gaussien, 16);
                 break;
 
-            //permet de prendre une photo
-            case R.id.photo:
-                takeImageFromCamera();
+            //convolution moyenneur
+            case R.id.moyenneur:
+                int[][] moyenneur = new int[][]{{1,1,1},{1,1,1},{1,1,1}}; // 9
+                convolute(moyenneur, 9);
+                break;
+
+            //convolution sobel
+            case R.id.sobel:
+                int[][] sobel = new int[][]{{-1,0,1},{-2,0,2},{-1,0,1}}; // 1
+                convolute(sobel, 1);
+                break;
+
+            //convolution laplacien
+            case R.id.laplacien:
+                int[][]laplacien = new int[][]{{0,1,0},{1,-4,1},{0,1,0}}; // 1
+                convolute(laplacien, 1);
+                break;
+
+            //charger une image de la galerie
+            case R.id.gallery:
+                LoadGallery();
                 break;
         }
+    }
+
+
+    /**
+     * Permet quand on touche l'écran de générer un évènement
+     * ici un zoom x2
+     * @param e
+     * @return
+     */
+    public boolean onTouchEvent(MotionEvent e) { //zoom en appuyant sur l'ecran
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
+        bitmap = drawable.getBitmap();
+        switch (e.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                if (bitmap != null) {
+                    zoom(2);
+                }
+                break;
+        }
+        return true;
     }
 
 
@@ -230,95 +270,37 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+
+
     /**
-     * Ne garde qu'une seule couleur de l'image, ici le vert
-     * A essayer sur une image avec des couleurs très tranchés (par ex : smarties)
+     * Egalisation d'histogramme d'une image en nuances de gris
      */
-    public void dominate() {
+    public void egalisation() {
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
         int height = bitmap.getHeight();
         int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int color = pixels[i];
-            int red = Color.red(color);
-            int green = Color.green(color);
-            int blue = Color.blue(color);
-
-            if (green<blue+red) {
-                red = (3 * red + 59 * green + 11 * blue) / 100;
-                color = Color.rgb(red, red, red);
-                pixels[i] = color;
+        int[] hist = new int[256];
+        int[] pixels = new int[height * width];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        for (int i = 0; i < pixels.length; i++) {
+            int gray = (30 * Color.red(pixels[i]) + 59 * Color.green(pixels[i]) + 11 * Color.blue(pixels[i])) / 100;
+            hist[gray]++;
+        }
+        int[] c = new int[256];
+        for (int k = 0; k < 256; k++) {
+            for (int j = 0; j < k; j++) {
+                c[k] = c[k] + hist[j];
             }
         }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        int[] pixelsN = new int[height * width];
+        for (int i = 0; i < pixels.length; i++) {
+            int gray = (30 * Color.red(pixels[i]) + 59 * Color.green(pixels[i]) + 11 * Color.blue(pixels[i])) / 100;
+            pixelsN[i] = Color.rgb((c[gray] * 255) / (width * height), (c[gray] * 255) / (width * height), (c[gray] * 255) / (width * height));
+        }
+        bitmap.setPixels(pixelsN, 0, width, 0, 0, width, height);
         imageView.setImageBitmap(bitmap);
     }
 
-
-
-    /**
-     * Contraste d'une image en couleur
-     * Par egalisation d'histogramme
-     */
-    public void contrast() {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        int[] hr = new int[256];
-        int[] hg = new int[256];
-        int[] hb = new int[256];
-        for(int i=0 ; i<256 ; i++) {
-            hr[i] = 0;
-            hg[i] = 0;
-            hb[i] = 0;
-        }
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int red = Color.red(pixels[i]);
-            hr[red]++;
-
-            int green = Color.green(pixels[i]);
-            hg[green]++;
-
-            int blue = Color.blue((pixels[i]));
-            hb[blue]++;
-        }
-
-        int[] cr = new int[256];
-        int sumr = 0;
-        int[] cg = new int[256];
-        int sumg = 0;
-        int[] cb = new int[256];
-        int sumb = 0;
-        for(int i=0 ; i<256 ; i++) {
-            sumr = sumr + hr[i];
-            cr[i] = sumr;
-            sumg = sumg + hg[i];
-            cg[i] = sumg;
-            sumb = sumb + hb[i];
-            cb[i] = sumb;
-        }
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int red = Color.red(pixels[i]);
-            red = (cr[red] * 255) / pixels.length;
-            int green = Color.green(pixels[i]);
-            green = (cr[green] * 255) / pixels.length;
-            int blue = Color.blue(pixels[i]);
-            blue = (cr[blue] * 255) / pixels.length;
-            pixels[i] = Color.rgb(red,green,blue);
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bitmap);
-    }
 
 
 
@@ -357,28 +339,92 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * Permet d'accéder à l'appareil photo et de prendre une photo
-     * de la mettre ensuite dans le bitmap
+     * Permet d'appliquer une convolution avec une matrice 3*3
+     * @param kernel
+     * @param factor
      */
-    static final int REQUEST_IMAGE_CAPTURE = 1;
+    public void convolute(int[][] kernel,int factor) {
 
-    public void takeImageFromCamera() {
-        Intent takePictureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        int[] pixelsN = pixels.clone();
+        int max =255;
+        for (int i = 1; i < width-1; i++) {
+            for (int j = 1; j < height-1; j++) {
+
+                int red = kernel[0][0]*Color.red(pixels[i-1 + (j-1)*width])+kernel[0][1]*Color.red(pixels[i + (j-1)*width])+kernel[0][2]*Color.red(pixels[i+1 + (j-1)*width])+kernel[1][0]*Color.red(pixels[i-1 + j*width])
+                        +kernel[1][1]*Color.red(pixels[i + j*width])+kernel[1][2]*Color.red(pixels[i+1 + j*width])+kernel[2][0]*Color.red(pixels[i-1 + (j+1)*width])+kernel[2][1]*Color.red(pixels[i + (j+1)*width])+kernel[2][2]*Color.red(pixels[i+1 + (j+1)*width]);
+
+                int green = kernel[0][0]*Color.green(pixels[i-1 + (j-1)*width])+kernel[0][1]*Color.green(pixels[i + (j-1)*width])+kernel[0][2]*Color.green(pixels[i+1 + (j-1)*width])+kernel[1][0]*Color.green(pixels[i-1 + j*width])
+                        +kernel[1][1]*Color.green(pixels[i + j*width])+kernel[1][2]*Color.green(pixels[i+1 + j*width])+kernel[2][0]*Color.green(pixels[i-1 + (j+1)*width])+kernel[2][1]*Color.green(pixels[i + (j+1)*width])+kernel[2][2]*Color.green(pixels[i+1 + (j+1)*width]);
+
+                int blue = kernel[0][0]*Color.blue(pixels[i-1 + (j-1)*width])+kernel[0][1]*Color.blue(pixels[i + (j-1)*width])+kernel[0][2]*Color.blue(pixels[i+1 + (j-1)*width])+kernel[1][0]*Color.blue(pixels[i-1 + j*width])
+                        +kernel[1][1]*Color.blue(pixels[i + j*width])+kernel[1][2]*Color.blue(pixels[i+1 + j*width])+kernel[2][0]*Color.blue(pixels[i-1 + (j+1)*width])+kernel[2][1]*Color.blue(pixels[i + (j+1)*width])+kernel[2][2]*Color.blue(pixels[i+1 + (j+1)*width]);
+
+                red = red/factor;
+                green = green/factor;
+                blue = blue/factor;
+
+                if (red > max) {
+                    red = max;
+                }
+                if (green > max) {
+                    green = max;
+                }
+                if (blue > max) {
+                    blue = max;
+                }
+                //int gray = (30 * red + 59 * green + 11 * blue) / 100;
+
+                pixelsN[i+j*width] = Color.rgb(red, green, blue);
+            }
         }
+        bitmap.setPixels(pixelsN, 0, width, 0, 0, width, height);
+        imageView.setImageBitmap(bitmap);
     }
 
+
+    /**
+     * Méthode qui permet de charger une image depuis la galerie
+     */
+    public void LoadGallery() {
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK); //MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        String pictureDirectoryPath = pictureDirectory.getPath();
+
+        Uri data = Uri.parse(pictureDirectoryPath);
+        galleryIntent.setDataAndType(data, "image/*");
+        startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            this.bitmap = imageBitmap;
-            bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-            ImageView imageView = (ImageView) findViewById(R.id.imageView);
-            imageView.setImageBitmap(imageBitmap);
+        if (resultCode == RESULT_OK){
+            if (requestCode == RESULT_LOAD_IMG){
+                Uri imageUri = data.getData();
+                InputStream inputStream;
+
+                try{
+                    inputStream = getContentResolver().openInputStream(imageUri);
+
+                    Bitmap bmp = BitmapFactory.decodeStream(inputStream);
+
+                    ImageView imageView = (ImageView) findViewById(R.id.imageView);
+                    bitmap = bmp;
+                    bitmap = bitmap.copy(Bitmap.Config.ARGB_8888,true);
+                    imageView.setImageBitmap(bmp);
+
+                } catch (FileNotFoundException e){
+                    e.printStackTrace();
+                    Toast.makeText(this, "Unable to open image",Toast.LENGTH_LONG).show();
+                }
+            }
         }
     }
+
 
 
     /**

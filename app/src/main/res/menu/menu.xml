@@ -41,20 +41,38 @@
         </menu>
     </item>
 
-    <item android:id="@+id/contrast"
-          android:title="@string/message_Contrast"
+    <item android:id="@+id/egalisation"
+          android:title="@string/message_Egalisation"
           android:onClick="onOptionsItem"/>
 
     <item android:id="@+id/zoom"
           android:title="@string/message_Zoom"
           android:onClick="onOptionsItem"/>
 
-    <item android:id="@+id/domin"
-          android:title="@string/message_Domin"
-          android:onClick="onOptionsItem"/>
-
     <item android:id="@+id/photo"
           android:title="@string/message_Photo"
+          android:onClick="onOptionsItem"/>
+
+    <item android:id="@+id/convolution"
+          android:title="@string/message_Convolution">
+        <menu>
+            <item android:id="@+id/moyenneur"
+                  android:title="@string/message_Moyenneur"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/gaussien"
+                  android:title="@string/message_Gaussien"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/sobel"
+                  android:title="@string/message_Sobel"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/laplacien"
+                  android:title="@string/message_Laplacien"
+                  android:onClick="onOptionsItem"/>
+        </menu>
+    </item>
+
+    <item android:id="@+id/gallery"
+          android:title="@string/message_Gallery"
           android:onClick="onOptionsItem"/>
 
 </menu>

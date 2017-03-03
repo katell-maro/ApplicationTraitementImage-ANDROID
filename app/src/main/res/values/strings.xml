@@ -9,11 +9,17 @@
     <string name="message_Domin">Surprise</string>
     <string name="message_Hamster">Hamster</string>
     <string name="message_Smarties">Smarties</string>
-    <string name="message_Contrast">Contraste</string>
+    <string name="message_Egalisation">Egalisation de histogramme</string>
     <string name="message_Sepia">Sepia</string>
     <string name="message_Zoom">Zoom</string>
     <string name="message_Teinte">Teinte</string>
     <string name="message_ChangeImage">Changer image</string>
     <string name="message_Photo">Prendre une photo</string>
+    <string name="message_Convolution">Convolution</string>
+    <string name="message_Gallery">Importer une image de la galerie</string>
+    <string name="message_Moyenneur">Moyenneur</string>
+    <string name="message_Gaussien">Gaussien</string>
+    <string name="message_Sobel">Sobel</string>
+    <string name="message_Laplacien">Laplacien</string>
 
 </resources>
