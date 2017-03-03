@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
-import android.nfc.Tag;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -16,18 +15,13 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.*;
-import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.StringTokenizer;
 
 import static android.graphics.Bitmap.createBitmap;
 
@@ -37,6 +31,12 @@ public class MainActivity extends AppCompatActivity {
      * Attribut correspondant au bitmap contenue dans l'ImageView
      */
     private Bitmap bitmap;
+
+    /**
+     * Tableau de pixels qui correspond à la precedente bitmap
+     * permet d'enlever le filtre precedent
+     */
+    private int[] bitmapInit;
 
     /**
      * la seekBar qui est utilisé dans différents cas :
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText editText;
 
     /**
-     * Bouton qui est utilisé pour valider un editText suit à une saisi
+     * Bouton qui est utilisé pour valider un editText suite à une saisi
      */
     private Button button;
 
@@ -89,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
         bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.sombre,option); //hamster : nom de l'image affiché au lancement de l'application
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         imageView.setImageBitmap(bitmap);
+
+        recover();
     }
 
 
@@ -189,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
                 bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.sombre);
                 bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                 imageView.setImageBitmap(bitmap);
+                recover();
                 break;
 
             //permet de mettre une image (smarties)
@@ -197,11 +200,17 @@ public class MainActivity extends AppCompatActivity {
                 bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.smarty);
                 bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                 imageView.setImageBitmap(bitmap);
+                recover();
                 break;
 
             //permet de prendre une photo
             case R.id.photo:
                 takePhoto();
+                break;
+
+            //Permet d'afficher l'image initiale
+            case R.id.init:
+                init();
                 break;
         }
     }
@@ -801,11 +810,34 @@ public class MainActivity extends AppCompatActivity {
         bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         imageView.setImageBitmap(bitmap);
+
+        recover();
     }
 
 
 
+    /**
+     * Permet de récupérer l'image initiale
+     */
+    private void recover() {
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
+        bitmapInit = new int[height*width];
+        bitmap.getPixels(bitmapInit,0,width,0,0,width,height);
+    }
 
+
+
+    /**
+     * Permet de réinitialiser l'image
+     */
+    private void init() {
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
+        bitmap.setPixels(bitmapInit,0,width,0,0,width,height);
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        imageView.setImageBitmap(bitmap);
+    }
 
 
 

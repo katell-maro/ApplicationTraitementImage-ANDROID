@@ -66,6 +66,8 @@
           android:title="@string/message_Photo"
           android:onClick="onOptionsItem"/>
 
-
+    <item android:id="@+id/init"
+          android:title="@string/message_Init"
+          android:onClick="onOptionsItem"/>
 
 </menu>

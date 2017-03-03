@@ -20,5 +20,6 @@
     <string name="message_Button">OK</string>
     <string name="message_Tolerance">Tolerance :</string>
     <string name="message_Surexposition">Surexposition</string>
+    <string name="message_Init">Image initiale</string>
 
 </resources>
