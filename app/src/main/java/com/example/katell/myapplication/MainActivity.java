@@ -6,6 +6,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.ClipDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -61,6 +65,12 @@ public class MainActivity extends AppCompatActivity {
      */
     private Button button;
 
+    /**
+     * passe à true quand on veut teinter une image
+     * permet d'utiliser le bouton 2 fois
+     */
+    boolean colorize = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         //imageView : initialisation
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
         BitmapFactory.Options option = new BitmapFactory.Options();
-        bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.sombre,option); //hamster : nom de l'image affiché au lancement de l'application
+        bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.hamster,option); //hamster : nom de l'image affiché au lancement de l'application
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         imageView.setImageBitmap(bitmap);
 
@@ -118,10 +128,12 @@ public class MainActivity extends AppCompatActivity {
     public void onOptionsItem(MenuItem item) {
         //Permet de rendre touts les éléments invisibles suite à une utilisation
         seekBar.setVisibility(View.INVISIBLE);
+        seekBar.setProgress(0);
         textView.setVisibility(View.INVISIBLE);
         editText.setVisibility(View.INVISIBLE);
         editText.setText("");
         button.setVisibility(View.INVISIBLE);
+        colorize = false;
 
         switch (item.getItemId()) {
             //pour griser
@@ -136,18 +148,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
             //pour appliquer une teinte rouge
-            case R.id.red:
-                colorize(0);
-                break;
-
-            //pour appliquer une teinte verte
-            case R.id.green:
-                colorize(100);
-                break;
-
-            //pour appliquer une teinte bleu
-            case R.id.blue:
-                colorize(240);
+            case R.id.colorize:
+                colorize = true;
+                colorize();
                 break;
 
             //pour appliquer une teinte sepia
@@ -188,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
             //permet de mettre une image (hamster)
             case R.id.hamster:
                 ImageView imageView = (ImageView) findViewById(R.id.imageView);
-                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.sombre);
+                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.hamster);
                 bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                 imageView.setImageBitmap(bitmap);
                 recover();
@@ -212,6 +215,18 @@ public class MainActivity extends AppCompatActivity {
             case R.id.init:
                 init();
                 break;
+        }
+    }
+
+
+    /**
+     * Permet de rediriger l'action du bouton
+     */
+    public void onOptionsButton(View view) {
+        if (colorize) {
+            colorizeButton();
+        } else {
+            isolateColorButton();
         }
     }
 
@@ -242,6 +257,46 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+    /**
+     * Suite de méthodes qui permettent de changer la teinte d'une image
+     * Ici la méthode permet d'afficher les différents éléments utiles à l'utilisateur
+     */
+    private void colorize() {
+        seekBar.setVisibility(View.VISIBLE);
+        seekBar.setMax(360);
+        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_color_lens_black_24dp));
+        button.setVisibility(View.VISIBLE);
+
+        //gerer les actions de la seekBar
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float[] hsv = new float[3];
+                hsv[0] = progress;
+                hsv[1] = 1;
+                hsv[2] = 1;
+                int color = Color.HSVToColor(hsv);
+                seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+    }
+
+
+    /**
+     * Méthode appelé quand le bouton est pressé
+     * Elle permet de récuperer la valeur de la seekBar
+     */
+    public void colorizeButton() {
+        int color = seekBar.getProgress();
+        colorize(color);
+    }
 
     /**
      * colorie l'image selon une teinte donnée en paramètre
@@ -305,22 +360,44 @@ public class MainActivity extends AppCompatActivity {
      * Ici la méthode permet d'afficher les différents éléments utiles à l'utilisateur
      */
     private void isolateColor() {
+        seekBar.setVisibility(View.VISIBLE);
+        seekBar.setMax(360);
+        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_color_lens_black_24dp));
         editText.setVisibility(View.VISIBLE);
         textView.setVisibility(View.VISIBLE);
         button.setVisibility(View.VISIBLE);
         textView.setText(R.string.message_Tolerance);
+
+        //gerer les actions de la seekBar
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float[] hsv = new float[3];
+                hsv[0] = progress;
+                hsv[1] = 1;
+                hsv[2] = 1;
+                int color = Color.HSVToColor(hsv);
+                seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
     }
 
 
     /**
      * Méthode appelé quand le bouton est pressé
      * Elle permet de récupérer la tolérance qui l'utilisateur a noté dans l'EditText
-     * @param view
      */
-    public void isolateColor(View view) {
+    public void isolateColorButton() {
         try {
             int interval = Integer.parseInt(editText.getText().toString());
-            isolateColor(15,interval);
+            int color = seekBar.getProgress();
+            isolateColor(color,interval);
         } catch (Exception e) {
             Toast.makeText(MainActivity.this, "Veuillez rentrer un nombre", Toast.LENGTH_LONG).show();
             editText.setText("");

@@ -55,7 +55,8 @@
             android:text="@string/message_Button"
             android:id="@+id/button" android:layout_above="@+id/seekBar" android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:onClick="isolateColor"/>
+            android:onClick="onOptionsButton"
+            android:maxHeight="2dp"/>
 
 
 </RelativeLayout>

@@ -23,14 +23,8 @@
             <item android:id="@+id/random"
                   android:title="@string/message_Random"
                   android:onClick="onOptionsItem"/>
-            <item android:id="@+id/red"
-                  android:title="@string/message_Red"
-                  android:onClick="onOptionsItem"/>
-            <item android:id="@+id/green"
-                  android:title="@string/message_Green"
-                  android:onClick="onOptionsItem"/>
-            <item android:id="@+id/blue"
-                  android:title="@string/message_Blue"
+            <item android:id="@+id/colorize"
+                  android:title="@string/message_Teinte"
                   android:onClick="onOptionsItem"/>
             <item android:id="@+id/sepia"
                   android:title="@string/message_Sepia"
