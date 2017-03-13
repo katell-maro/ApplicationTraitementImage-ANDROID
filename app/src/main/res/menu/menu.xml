@@ -1,25 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item android:id="@+id/changeImage"
-          android:title="@string/message_ChangeImage">
-            <menu>
-                <item android:id="@+id/hamster"
-                      android:title="@string/message_Hamster"
-                      android:onClick="onOptionsItem"/>
-                <item android:id="@+id/smarties"
-                      android:title="@string/message_Smarties"
-                      android:onClick="onOptionsItem"/>
-            </menu>
+          android:title="@string/message_ChangeImage"
+          android:icon="@drawable/ic_add_white_24dp"
+          app:showAsAction="ifRoom">
+        <menu>
+            <item android:id="@+id/photo"
+                  android:title="@string/message_Photo"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/hamster"
+                  android:title="@string/message_Hamster"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/smarties"
+                  android:title="@string/message_Smarties"
+                  android:onClick="onOptionsItem"/>
+        </menu>
     </item>
 
-    <item android:id="@+id/gray"
-          android:title="@string/message_Gray"
-          android:onClick="onOptionsItem"/>
+    <item android:id="@+id/init"
+          android:title="@string/message_Init"
+          android:icon="@drawable/ic_autorenew_white_24dp"
+          android:onClick="onOptionsItem"
+          app:showAsAction="ifRoom"/>
 
     <item android:id="@+id/teinte"
-          android:title="@string/message_Teinte">
+          android:title="@string/message_Filtre">
         <menu>
+            <item android:id="@+id/gray"
+                  android:title="@string/message_Gray"
+                  android:onClick="onOptionsItem"/>
             <item android:id="@+id/random"
                   android:title="@string/message_Random"
                   android:onClick="onOptionsItem"/>
@@ -54,14 +65,6 @@
 
     <item android:id="@+id/zoom"
           android:title="@string/message_Zoom"
-          android:onClick="onOptionsItem"/>
-
-    <item android:id="@+id/photo"
-          android:title="@string/message_Photo"
-          android:onClick="onOptionsItem"/>
-
-    <item android:id="@+id/init"
-          android:title="@string/message_Init"
           android:onClick="onOptionsItem"/>
 
 </menu>
