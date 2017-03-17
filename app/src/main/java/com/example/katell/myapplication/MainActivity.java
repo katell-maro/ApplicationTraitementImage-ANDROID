@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
             //pour appliquer une teinte aléatoire
             case R.id.random:
                 int hue = (int) (Math.random() * 360);
-                colorize(hue);
+                toColorize(hue);
                 break;
 
             //pour appliquer une teinte rouge
@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
 
             //pour la surexposition
             case R.id.surexposition:
-                surexposition();
+                overexposure();
                 break;
 
             //pour zoomer (2x)
@@ -236,30 +236,13 @@ public class MainActivity extends AppCompatActivity {
      * Permet de griser l'image
      */
     private void toGray() {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int color = pixels[i];
-            int red = Color.red(color);
-            int green = Color.green(color);
-            int blue = Color.blue(color);
-            int gray = (30*red + 59*green + 11*blue)/100;
-            color = Color.rgb(gray,gray,gray);
-            pixels[i] = color;
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bitmap);
+        bitmap = Algorithm.toGray(bitmap);
     }
 
 
 
     /**
-     * Suite de méthodes qui permettent de changer la teinte d'une image
+     ********* Teinte **********
      * Ici la méthode permet d'afficher les différents éléments utiles à l'utilisateur
      */
     private void colorize() {
@@ -295,34 +278,15 @@ public class MainActivity extends AppCompatActivity {
      */
     public void colorizeButton() {
         int color = seekBar.getProgress();
-        colorize(color);
+        toColorize(color);
     }
 
     /**
      * colorie l'image selon une teinte donnée en paramètre
      * @param hue la teinte à appliquer à l'image
      */
-    private void colorize(int hue) {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        int color;
-        float[] hsv = new float[3];
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            color = pixels[i];
-            Color.colorToHSV(color,hsv);
-            hsv[0] = hue;
-            color = Color.HSVToColor(hsv);
-            pixels[i] = color;
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bitmap);
+    private void toColorize(int hue) {
+        bitmap = Algorithm.toColorize(bitmap,hue);
     }
 
 
@@ -332,31 +296,13 @@ public class MainActivity extends AppCompatActivity {
      * l'algo est basé sur celui de la teinte
      */
     private void sepia() {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int color = pixels[i];
-            float[] hsv = new float[3];
-            Color.colorToHSV(color,hsv);
-            hsv[0] = 30;
-            hsv[1] = hsv[1]*55/100;
-            hsv[2] = hsv[2]*92/100;
-            color = Color.HSVToColor(hsv);
-            pixels[i] = color;
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bitmap);
+        bitmap = Algorithm.sepia(bitmap);
     }
 
 
 
     /**
-     * Suite de méthodes qui permettent d'isoler une couleur (ici le orange-marron)
+     * ****** ISOLATION DE COULEUR********
      * Ici la méthode permet d'afficher les différents éléments utiles à l'utilisateur
      */
     private void isolateColor() {
@@ -364,9 +310,11 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setMax(360);
         seekBar.setThumb(getResources().getDrawable(R.drawable.ic_color_lens_black_24dp));
         editText.setVisibility(View.VISIBLE);
+        editText.setText("30");
         textView.setVisibility(View.VISIBLE);
-        button.setVisibility(View.VISIBLE);
         textView.setText(R.string.message_Tolerance);
+        button.setVisibility(View.VISIBLE);
+
 
         //gerer les actions de la seekBar
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
@@ -392,12 +340,13 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Méthode appelé quand le bouton est pressé
      * Elle permet de récupérer la tolérance qui l'utilisateur a noté dans l'EditText
+     * et de changer la bitmap
      */
     public void isolateColorButton() {
         try {
             int interval = Integer.parseInt(editText.getText().toString());
             int color = seekBar.getProgress();
-            isolateColor(color,interval);
+            bitmap = Algorithm.isolateColor(bitmap,color,interval);
         } catch (Exception e) {
             Toast.makeText(MainActivity.this, "Veuillez rentrer un nombre", Toast.LENGTH_LONG).show();
             editText.setText("");
@@ -405,48 +354,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     * permet de ne garder que la couleur hue avec une erreur de interval
-     * @param hue
-     * @param interval
-     */
-     private void isolateColor(int hue, int interval) {
-         int height = bitmap.getHeight();
-         int width = bitmap.getWidth();
-         int[] pixels = new int[height*width];
-         bitmap.getPixels(pixels,0,width,0,0,width,height);
-         int min = (hue-interval)%360;
-         int max = (hue+interval)%360;
-
-         for (int i=0 ; i<pixels.length ; i++) {
-             int color = pixels[i];
-             float[] hsv = new float[3];
-             Color.colorToHSV(color,hsv);
-
-             if (hsv[0]>max || hsv[0]<min) {
-                 int red = Color.red(color);
-                 int green = Color.green(color);
-                 int blue = Color.blue(color);
-                 int gray = (30*red + 59*green + 11*blue)/100;
-                 color = Color.rgb(gray,gray,gray);
-             }
-
-             pixels[i] = color;
-         }
-
-         bitmap.setPixels(pixels,0,width,0,0,width,height);
-         ImageView imageView = (ImageView) findViewById(R.id.imageView);
-         imageView.setImageBitmap(bitmap);
-     }
-
-
 
     /**
-     * Début luminosité
-     */
-    float pixelsHSV[]; // permet de stocker l'image initial
-
-    /**
+     * Gère la luminosité de l'image
      * Permet de gerer la seekBar et les différents algos à faire
      */
     private void brightness() {
@@ -457,92 +367,17 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setThumb(getResources().getDrawable(R.drawable.ic_brightness_low_black_24dp));
 
         //avoir le tableau de pixels de l'image originale
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height * width];
-        pixelsHSV = new float[height * width];
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
-        float[] hsv = new float[3];
 
-        for (int i = 0; i < pixels.length; i++) {
-            Color.colorToHSV(pixels[i], hsv);
-            pixelsHSV[i] = hsv[2];
-        }
 
 
         //gerer les actions de la seekBar
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            float[] pixelsHSV = Algorithm.getBitmapBrightness(bitmap);
+
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                brightness(progress);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-    }
-
-
-    /**
-     * Algo pour changer la luminosite
-     * @param value
-     */
-    private void brightness(int value) {
-        float valueF = value-50;
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height * width];
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
-        float[] hsv = new float[3];
-
-        for (int i = 0; i < pixels.length; i++) {
-            Color.colorToHSV(pixels[i], hsv);
-            hsv[2] = pixelsHSV[i] + valueF / 100;
-            pixels[i] = Color.HSVToColor(hsv);
-        }
-
-        bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bitmap);
-    }
-
-
-
-    /**
-     * Contraste d'une image en couleur
-     * Par extension de dynamique
-     * utilise avec une seekBar
-     * On stocke d'abord l'image initial pour pouvoir la réutiliser ensuite
-     * et que la contraste soit de meilleure qualité
-     */
-    int[] pixelsContrast;
-    private void contrast() {
-        //gerer la seekBar
-        seekBar.setVisibility(View.VISIBLE);
-        seekBar.setProgress(61);
-        seekBar.setMax(122);
-        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_tonality_black_24dp));
-
-        //recuperer le tableau de pixels de l'image initial
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        pixelsContrast = new int[height*width];
-        bitmap.getPixels(pixelsContrast, 0, width, 0, 0, width, height);
-
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int min = 122 - progress;
-                int max = 122 + progress;
-                if (progress<61) {
-                    contrastLower(min,max);
-                } else if (progress==61) {
-                    bitmap.setPixels(pixelsContrast,0,bitmap.getWidth(),0,0,bitmap.getWidth(),bitmap.getHeight());
-                } else {
-                    contrastIncrease(min,max);
+                if (fromUser) {
+                    bitmap = Algorithm.brightness(bitmap, progress, pixelsHSV);
                 }
             }
 
@@ -555,81 +390,46 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     * Est lancé quand le contraste diminue
-     * @param min
-     * @param max
-     */
-    private void contrastLower(int min, int max) {
-        int[] LUT = new int[256];
-        for(int i=0 ; i<256 ; i++) {
-            LUT[i] = (i * (max-min) / 255) + min;
-        }
-        contrast(LUT);
-    }
-
 
     /**
-     * Est lancé quand le contraste augmente
-     * @param min
-     * @param max
+     * Contraste d'une image en couleur
+     * Par extension de dynamique
+     * utilise avec une seekBar
      */
-    private void contrastIncrease(int min, int max) {
-        int[] LUT = new int[256];
-        for(int i=0 ; i<min ; i++) {
-            LUT[i] = 0;
-        }
-        for(int i=min ; i<max ; i++) {
-            LUT[i] = (255 * (i-min)) / (max - min) ;
-        }
-        for(int i=max ; i<256 ; i++) {
-            LUT[i] = 255;
-        }
-        contrast(LUT);
-    }
+    private void contrast() {
+        //gerer la seekBar
+        seekBar.setVisibility(View.VISIBLE);
+        seekBar.setProgress(61);
+        seekBar.setMax(122);
+        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_tonality_black_24dp));
 
 
-    /**
-     * Algo qui permet de transformer les pixels
-     * @param LUT
-     */
-    private void contrast(int[] LUT) {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
 
-        for (int i=0 ; i<pixelsContrast.length ; i++) {
-            int red = Color.red(pixelsContrast[i]);
-            red = changeColor(red,LUT);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            //recuperer le tableau de pixels de l'image initial
+            int[] pixelsContrast = Algorithm.getBitmapRGB(bitmap);
 
-            int green = Color.green(pixelsContrast[i]);
-            green = changeColor(green,LUT);
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    int min = 122 - progress;
+                    int max = 122 + progress;
+                    if (progress < 61) {
+                        bitmap = Algorithm.contrastLower(min, max, bitmap, pixelsContrast);
+                    } else if (progress == 61) {
+                        bitmap = Algorithm.setBitmapRGB(bitmap, pixelsContrast);
+                    } else {
+                        bitmap = Algorithm.contrastIncrease(min, max, bitmap, pixelsContrast);
+                    }
+                }
+            }
 
-            int blue = Color.blue(pixelsContrast[i]);
-            blue = changeColor(blue,LUT);
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
 
-            pixels[i] = Color.rgb(red,green,blue);
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-    }
-
-
-    /**
-     * Permet de chnger les pixels à l'aide de LUT
-     * @param color
-     * @param LUT
-     * @return
-     */
-    private int changeColor (int color, int[] LUT) {
-        color = LUT[color];
-        if (color<0) {
-            color = 0;
-        } else if (color>255) {
-            color = 255;
-        }
-        return color;
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
     }
 
 
@@ -669,29 +469,24 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * Début srexposition
+     * Surexposition
+     * Permet de gerer la seekBar de lancer les algos nécessaire
      */
-    int pixelsSurex[]; // permet de stocker l'image initial
-
-    /**
-     * Permet de gerer la seekBar et les différents algos à faire
-     */
-    private void surexposition() {
+    private void overexposure() {
         //configurer la seekBar
         seekBar.setVisibility(View.VISIBLE);
-        seekBar.setMax(100);
+        seekBar.setMax(50);
         seekBar.setThumb(getResources().getDrawable(R.drawable.ic_flare_black_24dp));
-
-        //avoir le tableau de pixels de l'image originale
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        pixelsSurex = new int[height * width];
-        bitmap.getPixels(pixelsSurex, 0, width, 0, 0, width, height);
 
         //gerer les actions de la seekBar
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            //avoir le tableau de pixels de l'image originale
+            int [] pixelsOver = Algorithm.getBitmapRGB(bitmap);
+
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { surexposition(progress); }
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                bitmap = Algorithm.overexposure(bitmap,progress,pixelsOver);
+            }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -702,62 +497,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     * Provoque un effet de surexposition
-     */
-    public void surexposition(int value) {
-        value = value/10;
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int red = Color.red(pixelsSurex[i]);
-            red = value * red;
-            if (red>255) { red = 255; }
-            int green = Color.green(pixelsSurex[i]);
-            green = value * green;
-            if (green>255) { green = 255; }
-            int blue = Color.blue(pixelsSurex[i]);
-            blue = value * blue;
-            if (blue>255) { blue = 255; }
-            pixels[i] = Color.rgb(red,green,blue);
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-    }
-
-
 
     /**
      * Zoom par interpolation au plus proche voisin
      * @param zoom : facteur de zoom fixe
      */
     private void zoom(int zoom) {
-        //S'occuper de la taille
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int heightN = zoom*height;
-        int widthN = zoom*width;
-
-        //recuperer pixels de bitmap
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        Bitmap bmp = createBitmap(widthN,heightN,Bitmap.Config.ARGB_8888);
-        int[] pixelsN = new int[heightN*widthN];
-        for(int i=0 ; i<heightN*widthN ; i++) {
-            int x = (i%widthN)/zoom;
-            int y = (i/widthN)/zoom;
-            pixelsN[i] = pixels[x+y*width];
-        }
-
-        bmp.setPixels(pixelsN,0,widthN,0,0,widthN,heightN);
-        bitmap = bmp;
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bitmap);
+        bitmap = Algorithm.zoom(bitmap,zoom);
     }
+
 
 
     /**
@@ -897,10 +645,7 @@ public class MainActivity extends AppCompatActivity {
      * Permet de récupérer l'image initiale
      */
     private void recover() {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        bitmapInit = new int[height*width];
-        bitmap.getPixels(bitmapInit,0,width,0,0,width,height);
+        bitmapInit = Algorithm.getBitmapRGB(bitmap);
     }
 
 
@@ -909,11 +654,7 @@ public class MainActivity extends AppCompatActivity {
      * Permet de réinitialiser l'image
      */
     private void init() {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        bitmap.setPixels(bitmapInit,0,width,0,0,width,height);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bitmap);
+        bitmap = Algorithm.setBitmapRGB(bitmap,bitmapInit);
     }
 
 
@@ -1055,70 +796,4 @@ public class MainActivity extends AppCompatActivity {
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
         imageView.setImageBitmap(bitmap);
     }*/
-
-
-    /**
-     * Ne garde qu'une seule couleur de l'image, ici le vert
-     * A essayer sur une image avec des couleurs très tranchés (par ex : smarties)
-     */
-    /*public void dominate() {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int color = pixels[i];
-            int red = Color.red(color);
-            int green = Color.green(color);
-            int blue = Color.blue(color);
-
-            if (green<blue+red) {
-                red = (3 * red + 59 * green + 11 * blue) / 100;
-                color = Color.rgb(red, red, red);
-                pixels[i] = color;
-            }
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bitmap);
-    }*/
-
-
-    /*public void LoadGallery() {
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK); //MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        String pictureDirectoryPath = pictureDirectory.getPath();
-
-        Uri data = Uri.parse(pictureDirectoryPath);
-        galleryIntent.setDataAndType(data, "image/*");
-        startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
-    }
-
-    @Override*/
-    /*protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK){
-            if (requestCode == RESULT_LOAD_IMG){
-                Uri imageUri = data.getData();
-                InputStream inputStream;
-
-                try{
-                    inputStream = getContentResolver().openInputStream(imageUri);
-
-                    Bitmap bmp = BitmapFactory.decodeStream(inputStream);
-                    bitmap = bmp.copy(Bitmap.Config.ARGB_8888, true);
-                    ImageView imageView = (ImageView) findViewById(R.id.imageView);
-                    imageView.setImageBitmap(bitmap);
-                } catch (FileNotFoundException e){
-                    e.printStackTrace();
-                    Toast.makeText(this, "Unable to open image",Toast.LENGTH_LONG).show();
-                }
-            }
-        }
-    }
-
-    private static int RESULT_LOAD_IMG = 1;*/
-
-
 }
