@@ -74,7 +74,8 @@ class Algorithm {
             int red = Color.red(color);
             int green = Color.green(color);
             int blue = Color.blue(color);
-            int gray = (30*red + 59*green + 11*blue)/100;
+            //int gray = (30*red + 59*green + 11*blue)/100;
+            int gray = (red+green+blue)/3;
             color = Color.rgb(gray,gray,gray);
             pixels[i] = color;
         }
@@ -344,5 +345,99 @@ class Algorithm {
         }
 
         return setBitmapRGB(bmp,pixelsN);
+    }
+
+
+    /**
+     * Egalisation d'histogramme pour une image en couleur
+     * @param bitmap
+     * @return
+     */
+    static Bitmap histogram(Bitmap bitmap, boolean slow) {
+        //Calcul de l'histogramme sur l'image en nuances de gris
+        Bitmap bitmapGray = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        bitmapGray = toGray(bitmapGray);
+        int[] pixelsGray = getBitmapRGB(bitmapGray);
+        int[] h = new int[256];
+
+        for (int i=0 ; i<pixelsGray.length ; i++) {
+            int color = Color.red(pixelsGray[i]);  //car tous les canaux sont égaux
+            h[color]++;
+        }
+
+
+        //Calcul de l'histogramme cumulé
+        int[] sum = new int[256];
+        sum[0] = h[0];
+        for (int i=1 ; i<256 ; i++) {
+            sum[i] = sum[i-1] + h[i];
+        }
+
+
+        //Transformation des canaux
+        int[] pixels = getBitmapRGB(bitmap);
+        int size = pixels.length;
+
+        if (slow) {
+            for (int i=0 ; i<size ; i++) {
+
+                int color = pixels[i];
+                float value = (float) sum[Color.red(pixelsGray[i])]/ (float) size;
+                float[] hsv = new float[3];
+                Color.colorToHSV(color, hsv);
+                hsv[2] = value;
+                color = Color.HSVToColor(hsv);
+                pixels[i] = color;
+            }
+        } else {
+            for (int i=0 ; i<size ; i++) {
+                //Rouge
+                int red = Color.red(pixels[i]);
+                red = sum[red] * 255 / size;
+                if (red > 255) {
+                    red = 255;
+                }
+
+                //Vert
+                int green = Color.green(pixels[i]);
+                green = sum[green] * 255 / size;
+                if (green > 255) {
+                    green = 255;
+                }
+
+                //Bleu
+                int blue = Color.blue(pixels[i]);
+                blue = sum[blue] * 255 / size;
+                if (blue > 255) {
+                    blue = 255;
+                }
+
+                pixels[i] = Color.rgb(red, green, blue);
+            }
+        }
+
+        return setBitmapRGB(bitmap, pixels);
+    }
+
+
+    /**
+     * Seuillage d'une image
+     * Permet de passer une image en noir et blanc à l'aide d'un seuil
+     * D'avoir une image monochrome
+     * @param bitmap
+     * @param threshold
+     * @return bitmap
+     */
+    static Bitmap thresholding(Bitmap bitmap, int threshold, int[] pixelsInit) {
+        int[] pixels = pixelsInit.clone();
+        for (int i=0 ; i<pixels.length ; i++) {
+            if (Color.red(pixels[i])>=threshold) {
+                pixels[i] = Color.rgb(255,255,255);
+            } else {
+                pixels[i] = Color.rgb(0,0,0);
+            }
+        }
+
+        return setBitmapRGB(bitmap,pixels);
     }
 }

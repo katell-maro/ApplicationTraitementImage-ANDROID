@@ -16,6 +16,9 @@
             <item android:id="@+id/smarties"
                   android:title="@string/message_Smarties"
                   android:onClick="onOptionsItem"/>
+            <item android:id="@+id/lenna"
+                  android:title="@string/message_Lenna"
+                  android:onClick="onOptionsItem"/>
         </menu>
     </item>
 
@@ -56,11 +59,23 @@
           android:onClick="onOptionsItem"/>
 
     <item android:id="@+id/histogram"
-          android:title="@string/message_Histogram"
+          android:title="@string/message_Histogram">
+        <menu>
+            <item android:id="@+id/slow"
+                  android:title="@string/message_Slow"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/fast"
+                  android:title="@string/message_Fast"
+                  android:onClick="onOptionsItem"/>
+        </menu>
+    </item>
+
+    <item android:id="@+id/overexposure"
+          android:title="@string/message_Overexposure"
           android:onClick="onOptionsItem"/>
 
-    <item android:id="@+id/surexposition"
-          android:title="@string/message_Surexposition"
+    <item android:id="@+id/thresholding"
+          android:title="@string/message_Thresholding"
           android:onClick="onOptionsItem"/>
 
     <item android:id="@+id/zoom"

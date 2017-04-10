@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+
+
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -8,7 +11,8 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:context="com.example.katell.myapplication.MainActivity">
+    tools:context="com.example.katell.myapplication.MainActivity"
+    >
 
     <ImageView
             android:layout_width="wrap_content"
@@ -16,7 +20,8 @@
             android:id="@+id/imageView"
             android:layout_marginTop="9dp"
             android:layout_marginBottom="50dp"
-            android:layout_centerHorizontal="true" android:scaleType="center"/>
+            android:scaleType="center"
+            android:layout_centerHorizontal="true" />
 
     <SeekBar
             android:layout_width="wrap_content"

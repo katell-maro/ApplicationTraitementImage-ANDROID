@@ -18,7 +18,11 @@
     <string name="message_IsolateColor">Isolation d une couleur</string>
     <string name="message_Button">OK</string>
     <string name="message_Tolerance">Tolérance :</string>
-    <string name="message_Surexposition">Surexposition</string>
+    <string name="message_Overexposure">Surexposition</string>
     <string name="message_Init">Image initiale</string>
+    <string name="message_Lenna">Image peu contraste</string>
+    <string name="message_Slow">Lent</string>
+    <string name="message_Fast">Rapide</string>
+    <string name="message_Thresholding">Seuillage</string>
 
 </resources>

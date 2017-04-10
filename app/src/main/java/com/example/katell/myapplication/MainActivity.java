@@ -6,10 +6,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.ClipDrawable;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -19,8 +15,10 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
+import com.example.katell.myapplication.SeekBar.OnSeekBarChangeListenerWithArray;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,10 +35,15 @@ public class MainActivity extends AppCompatActivity {
     private Bitmap bitmap;
 
     /**
+     * L'imageView contenant la bitmap
+     */
+    private ImageView imageView;
+
+    /**
      * Tableau de pixels qui correspond à la precedente bitmap
      * permet d'enlever le filtre precedent
      */
-    private int[] bitmapInit;
+    public int[] bitmapInit;
 
     /**
      * la seekBar qui est utilisé dans différents cas :
@@ -94,11 +97,14 @@ public class MainActivity extends AppCompatActivity {
         button.setVisibility(View.INVISIBLE);
 
         //imageView : initialisation
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        imageView = (ImageView) findViewById(R.id.imageView);
         BitmapFactory.Options option = new BitmapFactory.Options();
         bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.hamster,option); //hamster : nom de l'image affiché au lancement de l'application
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         imageView.setImageBitmap(bitmap);
+
+        ZoomInZoomOut zoom = new ZoomInZoomOut();
+        imageView.setOnTouchListener(zoom);
 
         recover();
     }
@@ -173,14 +179,24 @@ public class MainActivity extends AppCompatActivity {
                 contrast();
                 break;
 
-            //pour l'égalisation d'histogramme
-            case R.id.histogram:
-                histogram();
+            //pour l'égalisation d'histogramme lent
+            case R.id.slow:
+                histogram(true);
+                break;
+
+            //pour l'égalisation d'histogramme rapide
+            case R.id.fast:
+                histogram(false);
                 break;
 
             //pour la surexposition
-            case R.id.surexposition:
+            case R.id.overexposure:
                 overexposure();
+                break;
+
+            //pour le seuillage
+            case R.id.thresholding:
+                thresholding();
                 break;
 
             //pour zoomer (2x)
@@ -190,7 +206,6 @@ public class MainActivity extends AppCompatActivity {
 
             //permet de mettre une image (hamster)
             case R.id.hamster:
-                ImageView imageView = (ImageView) findViewById(R.id.imageView);
                 bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.hamster);
                 bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                 imageView.setImageBitmap(bitmap);
@@ -199,8 +214,15 @@ public class MainActivity extends AppCompatActivity {
 
             //permet de mettre une image (smarties)
             case R.id.smarties:
-                imageView = (ImageView) findViewById(R.id.imageView);
                 bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.smarty);
+                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                imageView.setImageBitmap(bitmap);
+                recover();
+                break;
+
+            //permet de mettre une image (Lenna)
+            case R.id.lenna:
+                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pas_contraste);
                 bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                 imageView.setImageBitmap(bitmap);
                 recover();
@@ -255,12 +277,14 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float[] hsv = new float[3];
-                hsv[0] = progress;
-                hsv[1] = 1;
-                hsv[2] = 1;
-                int color = Color.HSVToColor(hsv);
-                seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                if (fromUser) {
+                    float[] hsv = new float[3];
+                    hsv[0] = progress;
+                    hsv[1] = 1;
+                    hsv[2] = 1;
+                    int color = Color.HSVToColor(hsv);
+                    seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                }
             }
 
             @Override
@@ -320,12 +344,14 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float[] hsv = new float[3];
-                hsv[0] = progress;
-                hsv[1] = 1;
-                hsv[2] = 1;
-                int color = Color.HSVToColor(hsv);
-                seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                if (fromUser) {
+                    float[] hsv = new float[3];
+                    hsv[0] = progress;
+                    hsv[1] = 1;
+                    hsv[2] = 1;
+                    int color = Color.HSVToColor(hsv);
+                    seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                }
             }
 
             @Override
@@ -347,6 +373,7 @@ public class MainActivity extends AppCompatActivity {
             int interval = Integer.parseInt(editText.getText().toString());
             int color = seekBar.getProgress();
             bitmap = Algorithm.isolateColor(bitmap,color,interval);
+            imageView.setImageBitmap(bitmap);
         } catch (Exception e) {
             Toast.makeText(MainActivity.this, "Veuillez rentrer un nombre", Toast.LENGTH_LONG).show();
             editText.setText("");
@@ -367,25 +394,20 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setThumb(getResources().getDrawable(R.drawable.ic_brightness_low_black_24dp));
 
         //avoir le tableau de pixels de l'image originale
-
-
+        float[] pixelsHSV = Algorithm.getBitmapBrightness(bitmap);
 
         //gerer les actions de la seekBar
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            float[] pixelsHSV = Algorithm.getBitmapBrightness(bitmap);
-
+        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixelsHSV){
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    bitmap = Algorithm.brightness(bitmap, progress, pixelsHSV);
-                }
-            }
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {}
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                bitmap = Algorithm.brightness(bitmap, seekBar.getProgress(), getBrightness()); //getBrightness est dans la classe OnSeekBarChangeListenerWithArray
+            }
         });
     }
 
@@ -403,23 +425,21 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setMax(122);
         seekBar.setThumb(getResources().getDrawable(R.drawable.ic_tonality_black_24dp));
 
+        //recuperer le tableau de pixels de l'image initial
+        int[] pixelsContrast = Algorithm.getBitmapRGB(bitmap);
 
-
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            //recuperer le tableau de pixels de l'image initial
-            int[] pixelsContrast = Algorithm.getBitmapRGB(bitmap);
-
+        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixelsContrast){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     int min = 122 - progress;
                     int max = 122 + progress;
                     if (progress < 61) {
-                        bitmap = Algorithm.contrastLower(min, max, bitmap, pixelsContrast);
+                        bitmap = Algorithm.contrastLower(min, max, bitmap, getPixels());
                     } else if (progress == 61) {
-                        bitmap = Algorithm.setBitmapRGB(bitmap, pixelsContrast);
+                        bitmap = Algorithm.setBitmapRGB(bitmap, getPixels());
                     } else {
-                        bitmap = Algorithm.contrastIncrease(min, max, bitmap, pixelsContrast);
+                        bitmap = Algorithm.contrastIncrease(min, max, bitmap, getPixels());
                     }
                 }
             }
@@ -436,33 +456,9 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Egalisation d'histogramme pour une image en couleur
-     * Utilisatin d'une SeekBar
      */
-    private void histogram() {
-
-        Toast.makeText(MainActivity.this, "En construction", Toast.LENGTH_LONG).show();
-
-        /*seekBar.setVisibility(View.VISIBLE);
-        seekBar.setProgress(50);
-        seekBar.setMax(100);
-        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_equalizer_black_24dp));
-
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                histogram(progress);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
-        });*/
-    }
-
-
-    private void histogram(int value) {
+    private void histogram(boolean slow) {
+        bitmap = Algorithm.histogram(bitmap,slow);
 
     }
 
@@ -478,14 +474,16 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setMax(50);
         seekBar.setThumb(getResources().getDrawable(R.drawable.ic_flare_black_24dp));
 
-        //gerer les actions de la seekBar
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            //avoir le tableau de pixels de l'image originale
-            int [] pixelsOver = Algorithm.getBitmapRGB(bitmap);
+        //avoir le tableau de pixels de l'image originale
+        int[] pixelsOver = Algorithm.getBitmapRGB(bitmap);
 
+        //gerer les actions de la seekBar
+        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixelsOver){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                bitmap = Algorithm.overexposure(bitmap,progress,pixelsOver);
+                if (fromUser) {
+                    bitmap = Algorithm.overexposure(bitmap, progress, getPixels());
+                }
             }
 
             @Override
@@ -495,6 +493,42 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
+
+
+
+    /**
+     * Seuillage
+     * Permet de gerer la seekBar de lancer l'algo nécessaire
+     */
+    private void thresholding() {
+        //configurer la seekBar
+        seekBar.setVisibility(View.VISIBLE);
+        seekBar.setMax(255);
+        seekBar.setProgress(127);
+        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_filter_b_and_w_black_24dp));
+        bitmap = Algorithm.toGray(bitmap);
+
+        //avoir le tableau de pixels de l'image original en nuances de gris
+        int pixels[] = Algorithm.getBitmapRGB(bitmap);
+
+        //gerer les actions de la seekBar
+        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixels){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    bitmap = Algorithm.thresholding(bitmap, progress, getPixels());
+                    imageView.setImageBitmap(bitmap);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+    }
+
 
 
 
@@ -514,6 +548,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int CAMERA_PERMISSION = 0;
     String mCurrentPhotoPath;
     static final int REQUEST_TAKE_PHOTO = 1;
+
 
     /**
      * Permet de gerer le permissions car l'API 23 ne le fait pas automatiquement
@@ -655,145 +690,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private void init() {
         bitmap = Algorithm.setBitmapRGB(bitmap,bitmapInit);
+        imageView.setImageBitmap(bitmap);
     }
 
 
-
-
-
-
-
-    /**
-     * Contraste d'une image en nuance de gris
-     * Par egalisation d'histogramme
-     */
-   /* public void contrast() {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        int[] h = new int[256];
-        for(int i=0 ; i<256 ; i++) {
-            h[i] = 0;
-        }
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int color = Color.red(pixels[i]);
-            h[color]++;
-        }
-
-        int[] c = new int[256];
-        int sum = 0;
-        for(int i=0 ; i<256 ; i++) {
-            sum = sum + h[i];
-            c[i] = sum;
-        }
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int color = Color.red(pixels[i]);
-            color = (c[color] * 255) / pixels.length;
-            pixels[i] = Color.rgb(color,color,color);
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-    }*/
-
-
-
-    /**
-     Contraste une image en nuance de gris
-     par extension de dynamique
-     */
- /*   public void contrast() {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-        int min = 255;
-        int max = 0;
-        int[] contrast = new int[height*width];
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int color = Color.red(pixels[i]);
-            contrast[i] = color;
-
-            if (color<min) {
-                min = color;
-            }
-            if (color>max) {
-                max = color;
-            }
-        }
-
-        int[] LUT = new int[256];
-        for(int i=0 ; i<256 ; i++) {
-            LUT[i] = (255 * (i - min)) / (max - min);
-            //LUT[i] = (i * (max -min) / 255) + min; //Permet de diminuer le contraste
-        }
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int color = LUT[contrast[i]];
-            pixels[i] = Color.rgb(color,color,color);
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-    }*/
-
-
-    /*private void contrast(int value) {
-        int height = bitmap.getHeight();
-        int width = bitmap.getWidth();
-        int[] pixels = new int[height*width];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-
-        int[] hr = new int[256];
-        int[] hg = new int[256];
-        int[] hb = new int[256];
-        for(int i=0 ; i<256 ; i++) {
-            hr[i] = 0;
-            hg[i] = 0;
-            hb[i] = 0;
-        }
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int red = Color.red(pixels[i]);
-            hr[red]++;
-
-            int green = Color.green(pixels[i]);
-            hg[green]++;
-
-            int blue = Color.blue((pixels[i]));
-            hb[blue]++;
-        }
-
-        int[] cr = new int[256];
-        int sumr = 0;
-        int[] cg = new int[256];
-        int sumg = 0;
-        int[] cb = new int[256];
-        int sumb = 0;
-        for(int i=0 ; i<256 ; i++) {
-            sumr = sumr + hr[i];
-            cr[i] = sumr;
-            sumg = sumg + hg[i];
-            cg[i] = sumg;
-            sumb = sumb + hb[i];
-            cb[i] = sumb;
-        }
-
-        for (int i=0 ; i<pixels.length ; i++) {
-            int red = Color.red(pixels[i]);
-            red = (cr[red] * 255) / pixels.length;
-            int green = Color.green(pixels[i]);
-            green = (cr[green] * 255) / pixels.length;
-            int blue = Color.blue(pixels[i]);
-            blue = (cr[blue] * 255) / pixels.length;
-            pixels[i] = Color.rgb(red,green,blue);
-        }
-
-        bitmap.setPixels(pixels,0,width,0,0,width,height);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bitmap);
-    }*/
 }
