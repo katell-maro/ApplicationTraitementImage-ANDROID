@@ -47,8 +47,17 @@
     </item>
 
     <item android:id="@+id/isolateColor"
-          android:title="@string/message_IsolateColor"
-          android:onClick="onOptionsItem"/>
+          android:title="@string/message_IsolateColor">
+        <menu>
+            <item android:id="@+id/isolateColorBar"
+                  android:title="@string/message_IsolateColorBar"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/isolateColorTouch"
+                  android:title="@string/message_IsolateColorTouch"
+                  android:onClick="onOptionsItem"/>
+        </menu>
+    </item>
+
 
     <item android:id="@+id/brightness"
           android:title="@string/message_Brightness"
@@ -59,16 +68,8 @@
           android:onClick="onOptionsItem"/>
 
     <item android:id="@+id/histogram"
-          android:title="@string/message_Histogram">
-        <menu>
-            <item android:id="@+id/slow"
-                  android:title="@string/message_Slow"
-                  android:onClick="onOptionsItem"/>
-            <item android:id="@+id/fast"
-                  android:title="@string/message_Fast"
-                  android:onClick="onOptionsItem"/>
-        </menu>
-    </item>
+          android:title="@string/message_Histogram"
+          android:onClick="onOptionsItem"/>
 
     <item android:id="@+id/overexposure"
           android:title="@string/message_Overexposure"
@@ -76,10 +77,6 @@
 
     <item android:id="@+id/thresholding"
           android:title="@string/message_Thresholding"
-          android:onClick="onOptionsItem"/>
-
-    <item android:id="@+id/zoom"
-          android:title="@string/message_Zoom"
           android:onClick="onOptionsItem"/>
 
 </menu>

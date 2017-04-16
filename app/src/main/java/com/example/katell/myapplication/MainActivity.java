@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -15,7 +14,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.example.katell.myapplication.SeekBar.OnSeekBarChangeListenerWithArray;
@@ -52,27 +50,10 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar seekBar;
 
     /**
-     * Le textView qui est utilisé dans le cas :
-     * où on veut pouvoir afficher une information qui permet de remplir l'EditText ensuite
+     * une deuxième seekBar qui est utilisé :
+     * pour isolation de couleur
      */
-    private TextView textView;
-
-    /**
-     * Utilisé pour entrer une donnée qui est utilisé ensuite dans les algos :
-     * la tolérance dans l'algo d'isolation d'une couleur
-     */
-    private EditText editText;
-
-    /**
-     * Bouton qui est utilisé pour valider un editText suite à une saisi
-     */
-    private Button button;
-
-    /**
-     * passe à true quand on veut teinter une image
-     * permet d'utiliser le bouton 2 fois
-     */
-    boolean colorize = false;
+    private SeekBar seekBar2;
 
 
     @Override
@@ -80,26 +61,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //Gerer le seekBar
+        //Gerer les seekBar
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         seekBar.setVisibility(View.INVISIBLE);
-
-        //Gerer le textView
-        textView = (TextView) findViewById(R.id.textView);
-        textView.setVisibility(View.INVISIBLE);
-
-        //Gerer le editText
-        editText = (EditText) findViewById(R.id.editText);
-        editText.setVisibility(View.INVISIBLE);
-
-        //Gerer le bouton
-        button = (Button) findViewById(R.id.button);
-        button.setVisibility(View.INVISIBLE);
+        seekBar2 = (SeekBar) findViewById(R.id.seekBar2);
+        seekBar2.setVisibility(View.INVISIBLE);
 
         //imageView : initialisation
         imageView = (ImageView) findViewById(R.id.imageView);
         BitmapFactory.Options option = new BitmapFactory.Options();
-        bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.hamster,option); //hamster : nom de l'image affiché au lancement de l'application
+        bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.icon,option); //hamster : nom de l'image affiché au lancement de l'application
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         imageView.setImageBitmap(bitmap);
 
@@ -132,14 +103,14 @@ public class MainActivity extends AppCompatActivity {
      * @param item
      */
     public void onOptionsItem(MenuItem item) {
-        //Permet de rendre touts les éléments invisibles suite à une utilisation
+        //Permet de réinitialiser tous les éléments suite à une utilisation
         seekBar.setVisibility(View.INVISIBLE);
         seekBar.setProgress(0);
-        textView.setVisibility(View.INVISIBLE);
-        editText.setVisibility(View.INVISIBLE);
-        editText.setText("");
-        button.setVisibility(View.INVISIBLE);
-        colorize = false;
+        seekBar2.setVisibility(View.INVISIBLE);
+        seekBar2.setProgress(0);
+        ZoomInZoomOut zoom = new ZoomInZoomOut();
+        imageView.setOnTouchListener(zoom);
+
 
         switch (item.getItemId()) {
             //pour griser
@@ -155,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
 
             //pour appliquer une teinte rouge
             case R.id.colorize:
-                colorize = true;
                 colorize();
                 break;
 
@@ -164,9 +134,14 @@ public class MainActivity extends AppCompatActivity {
                 sepia();
                 break;
 
-            //permet de ne garder qu'une seule couleur
-            case R.id.isolateColor:
-                isolateColor();
+            //permet de ne garder qu'une seule couleur avec une SeekBar
+            case R.id.isolateColorBar:
+                isolateColorBar();
+                break;
+
+            //permet de ne garder qu'une seule couleur avec le toucher
+            case R.id.isolateColorTouch:
+                isolateColorTouch();
                 break;
 
             //permet de regler la luminosite
@@ -180,13 +155,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
             //pour l'égalisation d'histogramme lent
-            case R.id.slow:
-                histogram(true);
-                break;
-
-            //pour l'égalisation d'histogramme rapide
-            case R.id.fast:
-                histogram(false);
+            case R.id.histogram:
+                histogram();
                 break;
 
             //pour la surexposition
@@ -197,11 +167,6 @@ public class MainActivity extends AppCompatActivity {
             //pour le seuillage
             case R.id.thresholding:
                 thresholding();
-                break;
-
-            //pour zoomer (2x)
-            case R.id.zoom:
-                zoom(2);
                 break;
 
             //permet de mettre une image (hamster)
@@ -241,18 +206,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     * Permet de rediriger l'action du bouton
-     */
-    public void onOptionsButton(View view) {
-        if (colorize) {
-            colorizeButton();
-        } else {
-            isolateColorButton();
-        }
-    }
-
-
 
     /**
      * Permet de griser l'image
@@ -268,10 +221,10 @@ public class MainActivity extends AppCompatActivity {
      * Ici la méthode permet d'afficher les différents éléments utiles à l'utilisateur
      */
     private void colorize() {
+        //configurer la seekBar
         seekBar.setVisibility(View.VISIBLE);
-        seekBar.setMax(360);
+        seekBar.setMax(359);
         seekBar.setThumb(getResources().getDrawable(R.drawable.ic_color_lens_black_24dp));
-        button.setVisibility(View.VISIBLE);
 
         //gerer les actions de la seekBar
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
@@ -282,8 +235,9 @@ public class MainActivity extends AppCompatActivity {
                     hsv[0] = progress;
                     hsv[1] = 1;
                     hsv[2] = 1;
-                    int color = Color.HSVToColor(hsv);
+                    int color = Algorithm.HSVToColor(hsv);
                     seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                    bitmap = Algorithm.toColorize(bitmap,progress);
                 }
             }
 
@@ -296,21 +250,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     * Méthode appelé quand le bouton est pressé
-     * Elle permet de récuperer la valeur de la seekBar
-     */
-    public void colorizeButton() {
-        int color = seekBar.getProgress();
-        toColorize(color);
-    }
-
-    /**
-     * colorie l'image selon une teinte donnée en paramètre
-     * @param hue la teinte à appliquer à l'image
-     */
-    private void toColorize(int hue) {
-        bitmap = Algorithm.toColorize(bitmap,hue);
+    private void toColorize(float hue) {
+        bitmap = Algorithm.toColorize(bitmap, hue);
     }
 
 
@@ -320,7 +261,15 @@ public class MainActivity extends AppCompatActivity {
      * l'algo est basé sur celui de la teinte
      */
     private void sepia() {
+        //images pour l'algo
+        Bitmap bmStain = BitmapFactory.decodeResource(getResources(), R.drawable.tache_cafe);
+        Bitmap bmNoise = BitmapFactory.decodeResource(getResources(), R.drawable.bruit);
+
         bitmap = Algorithm.sepia(bitmap);
+        bitmap = Algorithm.fusionNoise(bitmap,bmNoise);
+        bitmap = Algorithm.fusion(bitmap,bmStain,0,0,2);
+        bitmap = Algorithm.crop(bitmap);
+
     }
 
 
@@ -328,20 +277,21 @@ public class MainActivity extends AppCompatActivity {
     /**
      * ****** ISOLATION DE COULEUR********
      * Ici la méthode permet d'afficher les différents éléments utiles à l'utilisateur
+     * seekBar : gère la teinte à garder
+     * seekBar2 : gère la tolérance
      */
-    private void isolateColor() {
+    private void isolateColorBar() {
         seekBar.setVisibility(View.VISIBLE);
         seekBar.setMax(360);
         seekBar.setThumb(getResources().getDrawable(R.drawable.ic_color_lens_black_24dp));
-        editText.setVisibility(View.VISIBLE);
-        editText.setText("30");
-        textView.setVisibility(View.VISIBLE);
-        textView.setText(R.string.message_Tolerance);
-        button.setVisibility(View.VISIBLE);
+        seekBar2.setVisibility(View.VISIBLE);
+        seekBar2.setMax(100);
+        seekBar2.setProgress(30);
 
+        int[] pixels = Algorithm.getBitmapRGB(bitmap);
 
         //gerer les actions de la seekBar
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixels){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
@@ -349,8 +299,26 @@ public class MainActivity extends AppCompatActivity {
                     hsv[0] = progress;
                     hsv[1] = 1;
                     hsv[2] = 1;
-                    int color = Color.HSVToColor(hsv);
+                    int color = Algorithm.HSVToColor(hsv);
                     seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                    bitmap = Algorithm.isolateColor(bitmap,progress,seekBar2.getProgress(),getPixels());
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+
+        //gerer les actions de la seekBar2
+        seekBar2.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixels){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    bitmap = Algorithm.isolateColor(bitmap,seekBar.getProgress(),progress,getPixels());
                 }
             }
 
@@ -363,23 +331,45 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     * Méthode appelé quand le bouton est pressé
-     * Elle permet de récupérer la tolérance qui l'utilisateur a noté dans l'EditText
-     * et de changer la bitmap
-     */
-    public void isolateColorButton() {
-        try {
-            int interval = Integer.parseInt(editText.getText().toString());
-            int color = seekBar.getProgress();
-            bitmap = Algorithm.isolateColor(bitmap,color,interval);
-            imageView.setImageBitmap(bitmap);
-        } catch (Exception e) {
-            Toast.makeText(MainActivity.this, "Veuillez rentrer un nombre", Toast.LENGTH_LONG).show();
-            editText.setText("");
-        }
-    }
 
+    /**
+     * Permet de ne garder que la couleur touchée
+     */
+    private void isolateColorTouch() {
+        seekBar.setVisibility(View.VISIBLE);
+        seekBar.setMax(100);
+        seekBar.setProgress(30);
+
+        int[] pixels = Algorithm.getBitmapRGB(bitmap);
+
+        //gerer les actions de la seekBar
+        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixels){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {}
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(final SeekBar seekBar) {
+                imageView.setOnTouchListener(new View.OnTouchListener(){
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event){
+                        int x = (int)event.getX();
+                        int y = (int)event.getY();
+                        int pixel = bitmap.getPixel(x,y);
+                        float[] hsv = new float[3];
+                        Algorithm.colorToHSV(pixel,hsv);
+                        bitmap = Algorithm.isolateColor(bitmap,(int) hsv[0],seekBar.getProgress(),getPixels());
+                        imageView.setImageBitmap(bitmap);
+                        return false;
+                    }
+                });
+            }
+        });
+
+
+    }
 
 
     /**
@@ -399,15 +389,15 @@ public class MainActivity extends AppCompatActivity {
         //gerer les actions de la seekBar
         seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixelsHSV){
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {}
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                bitmap = Algorithm.brightness(bitmap, progress, getBrightness()); //getBrightness est dans la classe OnSeekBarChangeListenerWithArray
+            }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                bitmap = Algorithm.brightness(bitmap, seekBar.getProgress(), getBrightness()); //getBrightness est dans la classe OnSeekBarChangeListenerWithArray
-            }
+            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 
@@ -457,8 +447,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Egalisation d'histogramme pour une image en couleur
      */
-    private void histogram(boolean slow) {
-        bitmap = Algorithm.histogram(bitmap,slow);
+    private void histogram() {
+        bitmap = Algorithm.histogram(bitmap);
 
     }
 
@@ -511,6 +501,9 @@ public class MainActivity extends AppCompatActivity {
         //avoir le tableau de pixels de l'image original en nuances de gris
         int pixels[] = Algorithm.getBitmapRGB(bitmap);
 
+        //pour la première fois
+        bitmap = Algorithm.thresholding(bitmap,127,pixels);
+
         //gerer les actions de la seekBar
         seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixels){
             @Override
@@ -527,17 +520,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
-    }
-
-
-
-
-    /**
-     * Zoom par interpolation au plus proche voisin
-     * @param zoom : facteur de zoom fixe
-     */
-    private void zoom(int zoom) {
-        bitmap = Algorithm.zoom(bitmap,zoom);
     }
 
 

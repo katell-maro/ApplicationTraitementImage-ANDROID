@@ -10,12 +10,12 @@ public class OnSeekBarChangeListenerWithArray implements SeekBar.OnSeekBarChange
     /**
      * Tableau d'entiers comprenant tous les pixels d'une image
      */
-    private int[] pixels;
+    final private int[] pixels;
 
     /**
      * Tableau de float qui réprésente le v de hsv dans le tableau
      */
-    private float[] brightness;
+    final private float[] brightness;
 
 
     /**
@@ -24,6 +24,7 @@ public class OnSeekBarChangeListenerWithArray implements SeekBar.OnSeekBarChange
      */
     protected OnSeekBarChangeListenerWithArray(int[] pixels) {
         this.pixels = pixels;
+        this.brightness = null;
     }
 
 
@@ -32,8 +33,10 @@ public class OnSeekBarChangeListenerWithArray implements SeekBar.OnSeekBarChange
      * @param brightness tableau qui représente la luminosité de chaque pixels
      */
     protected OnSeekBarChangeListenerWithArray(float[] brightness) {
+        this.pixels = null;
         this.brightness = brightness;
     }
+
 
 
     /**
@@ -45,6 +48,7 @@ public class OnSeekBarChangeListenerWithArray implements SeekBar.OnSeekBarChange
     }
 
 
+
     /**
      * Retourne le champs brightness
      * @return brightness
@@ -52,6 +56,8 @@ public class OnSeekBarChangeListenerWithArray implements SeekBar.OnSeekBarChange
     protected float[] getBrightness() {
         return this.brightness;
     }
+
+
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
