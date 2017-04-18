@@ -5,30 +5,40 @@
 
     <string name="message_ChangeImage">Changer image</string>
     <string name="message_Photo">Prendre une photo</string>
+    <string name="message_Gallery">Importer une image de la galerie</string>
     <string name="message_Hamster">Hamster</string>
     <string name="message_Smarties">Smarties</string>
     <string name="message_Lenna">Image peu contraste</string>
 
     <string name="message_Init">Image initiale</string>
 
-    <string name="message_Filtre">Filtre</string>
+    <string name="message_Save">Sauvegarder une image</string>
+
+    <string name="message_Filtre">Filtres ></string>
     <string name="message_Teinte">Teinte</string>
     <string name="message_Random">Teinte Random</string>
     <string name="message_Gray">Nuances de gris</string>
     <string name="message_Sepia">Sepia</string>
     <string name="message_Old">Effet vieilli</string>
+    <string name="message_Overexposure">Surexposition</string>
+    <string name="message_Thresholding">Seuillage</string>
 
-    <string name="message_IsolateColor">Isolation d une couleur</string>
+    <string name="message_Convolution">Convolution ></string>
+    <string name="message_Moyenneur">Moyenneur</string>
+    <string name="message_Gaussien">Gaussien</string>
+    <string name="message_Sobel">Sobel</string>
+    <string name="message_Laplacien">Laplacien</string>
+
+    <string name="message_IsolateColor">Isolation d une couleur ></string>
     <string name="message_IsolateColorBar">Par barre</string>
     <string name="message_IsolateColorTouch">Par le toucher</string>
 
+    <string name="message_Adjust">Ajuster ></string>
     <string name="message_Brightness">Luminosite</string>
     <string name="message_Contrast">Contraste</string>
     <string name="message_Histogram">Egalisation de histogramme</string>
 
-    <string name="message_Overexposure">Surexposition</string>
 
-    <string name="message_Thresholding">Seuillage</string>
 
 
 </resources>

@@ -19,7 +19,7 @@ import android.widget.ImageView;
 
 /**
  * Created by Katell on 07/04/2017.
- * Inspiré grandement Stack Overflow
+ * Inspiré grandement de Stack Overflow
  */
 public class ZoomInZoomOut extends MainActivity implements OnTouchListener {
 

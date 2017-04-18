@@ -2,6 +2,7 @@ package com.example.katell.myapplication;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -26,10 +27,10 @@ import android.view.*;
 import android.widget.*;
 import com.example.katell.myapplication.SeekBar.OnSeekBarChangeListenerWithArray;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -61,6 +62,19 @@ public class MainActivity extends AppCompatActivity {
      */
     private SeekBar seekBar2;
 
+    /**
+     * Sert dans la méthode qui permet de charger une image de la galerie
+     */
+    private static int RESULT_LOAD_IMG = 1;
+
+    /**
+     * Permet de différencier si on veut charger une image de la galerie ou de l'appareil photo
+     * Si vrai, c'est de la galerie
+     * Si faux, c'est la l'appareil photo
+     */
+    boolean galery;
+
+
 
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -88,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         BitmapFactory.Options option = new BitmapFactory.Options();
-        bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.icon,option);
+        bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.hamster,option);
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
 
         //float scaleW = ((float) width)/bitmap.getWidth();
@@ -230,6 +244,46 @@ public class MainActivity extends AppCompatActivity {
             //permet de prendre une photo
             case R.id.photo:
                 takePhoto();
+                break;
+
+            //convolution gaussienne
+            case R.id.gaussien:
+                gaussien();
+                break;
+
+            //convolution moyenneur
+            case R.id.moyenneur:
+                moyenneur();
+                break;
+
+            //convolution sobel
+            case R.id.sobel:
+                bitmap = Algorithm.toGray(bitmap);
+                int[][] sobel_1 = new int[][]{{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}}; // 0
+                int[][] sobel_2 = new int[][]{{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}}; // 0
+                float[] sobel1 = Algorithm.convolute2(bitmap, sobel_1, 3);
+                float[] sobel2 = Algorithm.convolute2(bitmap, sobel_2, 3);
+                bitmap = Algorithm.sobel(bitmap, sobel1,sobel2);
+                bitmap = Algorithm.histogram(bitmap);
+                break;
+
+            //convolution laplacien
+            case R.id.laplacien:
+                bitmap = Algorithm.toGray(bitmap);
+                int[][] laplacien = new int[][]{{0, 1, 0}, {1, -4, 1}, {0, 1, 0}}; // 1
+                float [] laplacien_res = Algorithm.convolute2(bitmap, laplacien,3);
+                bitmap = Algorithm.laplacien(bitmap, laplacien_res);
+                bitmap = Algorithm.histogram(bitmap);
+                break;
+
+            //charger une image de la galerie
+            case R.id.gallery:
+                LoadGallery();
+                break;
+
+            //Sauvegarder une image
+            case R.id.save:
+                SaveImage(bitmap);
                 break;
 
             //Permet d'afficher l'image initiale
@@ -509,6 +563,80 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Convolution moyenneur
+     * Permet de gérer les seekBars
+     * seekBar : sert à choisir la taille de la matrice à appliquer
+     * seekbar2 : sert à choisir le nombre de fois que l'algorithme est appliqué
+     */
+    private void moyenneur() {
+        //configurer les seekBars
+        seekBar.setVisibility(View.VISIBLE);
+        seekBar.setMax(3);
+        seekBar.setProgress(1);
+        seekBar2.setVisibility(View.VISIBLE);
+        seekBar2.setMax(5);
+
+        //gerer les actions de la seekBar
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int size = 2*(progress+1)+1;
+                int[][] matrix = Algorithm.moyenneur(size);
+                for (int i=0 ; i<seekBar2.getProgress() ; i++) {
+                    bitmap = Algorithm.convolute(bitmap, matrix, size);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+
+        //gerer les actions de la seekBar2
+        seekBar2.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int size = 2*(seekBar.getProgress()+1)+1;
+                int[][] matrix = Algorithm.moyenneur(size);
+                for (int i=0 ; i<progress ; i++) {
+                   bitmap = Algorithm.convolute(bitmap, matrix, size);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+    }
+
+
+    /**
+     * Convolution : gaussien
+     * permet de gérer la seekBar
+     */
+    private void gaussien() {
+        //configurer les seekBars
+        seekBar.setVisibility(View.VISIBLE);
+        seekBar.setMax(5);
+
+        //gerer les actions de la seekBar
+        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                for (int i=0 ; i<progress ; i++) {
+                    bitmap = Algorithm.convolute(bitmap, getGaussien(), 5);
+                }
+            }
+        });
+    }
+
+
 
     /**
      * Permet de récupérer l'image initiale
@@ -554,6 +682,7 @@ public class MainActivity extends AppCompatActivity {
      * Permet de gerer les permissions et l'existance ou non de la caméra.
      */
     private void takePhoto() {
+        galery = false;
         PackageManager pm = this.getPackageManager();
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION);
@@ -623,29 +752,123 @@ public class MainActivity extends AppCompatActivity {
      * @param data
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        int targetW = imageView.getWidth();
-        int targetH = imageView.getHeight();
+        if (!galery) {
+            ImageView imageView = (ImageView) findViewById(R.id.imageView);
+            int targetW = imageView.getWidth();
+            int targetH = imageView.getHeight();
 
-        //Avoir les dimensions de bitmap
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
+            //Avoir les dimensions de bitmap
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            bmOptions.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+            int photoW = bmOptions.outWidth;
+            int photoH = bmOptions.outHeight;
 
-        //Determine de combien réduire l'image
-        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+            //Determine de combien réduire l'image
+            int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
 
-        // Decoder le fichier pour que la bitmap remplisse l'ImageView
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inPurgeable = true;
+            // Decoder le fichier pour que la bitmap remplisse l'ImageView
+            bmOptions.inJustDecodeBounds = false;
+            bmOptions.inSampleSize = scaleFactor;
+            bmOptions.inPurgeable = true;
 
-        bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-        bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-        imageView.setImageBitmap(bitmap);
+            bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+            bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+            imageView.setImageBitmap(bitmap);
 
-        recover();
+            recover();
+        } else {
+            if (resultCode == RESULT_OK) {
+                if (requestCode == RESULT_LOAD_IMG) {
+                    Uri imageUri = data.getData();
+                    InputStream inputStream;
+
+                    try {
+                        inputStream = getContentResolver().openInputStream(imageUri);
+
+                        Bitmap bmp = BitmapFactory.decodeStream(inputStream);
+
+                        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+                        bitmap = bmp;
+                        bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                        imageView.setImageBitmap(bmp);
+
+                        recover();
+
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        Toast.makeText(this, "Unable to open image", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        }
     }
+
+
+
+    /**
+     * Méthode qui permet de charger une image depuis la galerie
+     */
+    public void LoadGallery() {
+        galery = true;
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK); //MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        String pictureDirectoryPath = pictureDirectory.getPath();
+
+        Uri data = Uri.parse(pictureDirectoryPath);
+        galleryIntent.setDataAndType(data, "image/*");
+        startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
+    }
+
+
+
+    /**
+     * Permet de sauvegarder la bitmap modifiée dans le téléphone.
+     * Dans un dossier Image_PhotArt qui l'on trouve dans le gestionnaire de fichiers
+     * @param bmp
+     * Inspiré de StackOverFlow
+     */
+    public void SaveImage(Bitmap bmp) {
+        verifyStoragePermissions(this);
+        OutputStream fOut = null;
+        Uri outputFileUri;
+        try {
+            File root = new File(Environment.getExternalStorageDirectory() + File.separator + "Images_PhotArt" + File.separator);
+            root.mkdirs();
+            Random generator = new Random();
+            int n = 10000;
+            n = generator.nextInt(n);
+            String fname = "Image-" + n + ".jpg";
+            File sdImageMainDirectory = new File(root, fname);
+            outputFileUri = Uri.fromFile(sdImageMainDirectory);
+            fOut = new FileOutputStream(sdImageMainDirectory);
+        } catch (Exception e) {
+            Toast.makeText(this, "Error occured", Toast.LENGTH_SHORT).show();
+        }
+        try {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+            fOut.flush();
+            fOut.close();
+        } catch (Exception e) {
+        }
+        Toast.makeText(this, "Image saved in Images_PhotArt", Toast.LENGTH_SHORT).show();
+    }
+
+
+    /**
+     * Ce qui permet de gérer les permissions pour la sauvagrde d'une image
+     * Car à partir de l'API23, les permissions ne sont pu géré
+     * @param activity
+     */
+    public static void verifyStoragePermissions(Activity activity) {
+        String[] PERMISSIONS_STORAGE = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        final int REQUEST_EXTERNAL_STORAGE = 1;
+
+        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+        }
+    }
+
 }

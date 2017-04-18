@@ -5,10 +5,13 @@
     <item android:id="@+id/changeImage"
           android:title="@string/message_ChangeImage"
           android:icon="@drawable/ic_add_white_24dp"
-          app:showAsAction="ifRoom">
+          app:showAsAction="always">
         <menu>
             <item android:id="@+id/photo"
                   android:title="@string/message_Photo"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/gallery"
+                  android:title="@string/message_Gallery"
                   android:onClick="onOptionsItem"/>
             <item android:id="@+id/hamster"
                   android:title="@string/message_Hamster"
@@ -22,11 +25,17 @@
         </menu>
     </item>
 
+    <item android:id="@+id/save"
+          android:title="@string/message_Save"
+          android:onClick="onOptionsItem"
+          android:icon="@drawable/ic_save_white_24dp"
+          app:showAsAction="always"/>
+
     <item android:id="@+id/init"
           android:title="@string/message_Init"
           android:icon="@drawable/ic_autorenew_white_24dp"
           android:onClick="onOptionsItem"
-          app:showAsAction="ifRoom"/>
+          app:showAsAction="always"/>
 
     <item android:id="@+id/teinte"
           android:title="@string/message_Filtre">
@@ -46,6 +55,30 @@
             <item android:id="@+id/old"
                   android:title="@string/message_Old"
                   android:onClick="onOptionsItem"/>
+            <item android:id="@+id/overexposure"
+                  android:title="@string/message_Overexposure"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/thresholding"
+                  android:title="@string/message_Thresholding"
+                  android:onClick="onOptionsItem"/>
+        </menu>
+    </item>
+
+    <item android:id="@+id/convolution"
+          android:title="@string/message_Convolution">
+        <menu>
+            <item android:id="@+id/moyenneur"
+                  android:title="@string/message_Moyenneur"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/gaussien"
+                  android:title="@string/message_Gaussien"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/sobel"
+                  android:title="@string/message_Sobel"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/laplacien"
+                  android:title="@string/message_Laplacien"
+                  android:onClick="onOptionsItem"/>
         </menu>
     </item>
 
@@ -61,24 +94,19 @@
         </menu>
     </item>
 
-    <item android:id="@+id/brightness"
-          android:title="@string/message_Brightness"
-          android:onClick="onOptionsItem"/>
-
-    <item android:id="@+id/contrast"
-          android:title="@string/message_Contrast"
-          android:onClick="onOptionsItem"/>
-
-    <item android:id="@+id/histogram"
-          android:title="@string/message_Histogram"
-          android:onClick="onOptionsItem"/>
-
-    <item android:id="@+id/overexposure"
-          android:title="@string/message_Overexposure"
-          android:onClick="onOptionsItem"/>
-
-    <item android:id="@+id/thresholding"
-          android:title="@string/message_Thresholding"
-          android:onClick="onOptionsItem"/>
+    <item android:id="@+id/adjust"
+          android:title="@string/message_Adjust">
+        <menu>
+            <item android:id="@+id/brightness"
+                  android:title="@string/message_Brightness"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/contrast"
+                  android:title="@string/message_Contrast"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/histogram"
+                  android:title="@string/message_Histogram"
+                  android:onClick="onOptionsItem"/>
+        </menu>
+    </item>
 
 </menu>

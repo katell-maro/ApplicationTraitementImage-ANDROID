@@ -19,6 +19,20 @@ public class OnSeekBarChangeListenerWithArray implements SeekBar.OnSeekBarChange
      */
     final private float[] brightness;
 
+    /**
+     * Tableau qui est utilisé pour la convolution gaussienne
+     */
+    final private int[][] gaussien = new int[][]{{1,2,3,2,1}, {2,6,8,6,2}, {3,8,10,8,3}, {2,6,8,6,2}, {1,2,3,2,1}};
+
+
+    /**
+     * Contructeur
+     */
+    protected OnSeekBarChangeListenerWithArray() {
+        this.pixels = null;
+        this.brightness = null;
+    }
+
 
     /**
      * Constructeur
@@ -60,6 +74,15 @@ public class OnSeekBarChangeListenerWithArray implements SeekBar.OnSeekBarChange
     protected float[] getBrightness() {
         return this.brightness;
     }
+
+
+
+    /**
+     * GETTER
+     * Retourne la matrice de gauss
+     * @return gauss
+     */
+    protected  int[][] getGaussien() { return this.gaussien; }
 
 
 

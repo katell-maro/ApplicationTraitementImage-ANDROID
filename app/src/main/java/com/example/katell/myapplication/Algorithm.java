@@ -637,4 +637,202 @@ class Algorithm {
         return setBitmapRGB(bitmap,pixels);
     }
 
+
+
+    /**
+     * Permet de générer la matrice pour la convolution moyenneur
+     * @param size la taille de la matrice
+     * @return la matrice de taille size*size
+     */
+    static int[][] moyenneur(int size) {
+        int[][] matrix = new int[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                matrix[i][j] = 1;
+            }
+        }
+        return matrix;
+    }
+
+
+
+    /**
+     * Permet d'appliquer une convolution avec une matrice de n'importe quelle dimension. Ne gère que les valeurs positives. Bords calculés avec le miroir de l'image.
+     *
+     * @param kernel
+     */
+    static Bitmap convolute(Bitmap bitmap, int[][] kernel, int matrix_size) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = getBitmapRGB(bitmap);
+        int[] pixelsN = pixels.clone();
+        int max = 255;
+        int mat_compt = matrix_size / 2;
+        int red, green, blue;
+        int factor = 0;
+
+        for (int k = 0; k < matrix_size; k++) {
+            for (int l = 0; l < matrix_size; l++) {
+                factor += kernel[k][l];
+            }
+        }
+
+        for (int i = 0; i < height; i++) {
+            for (int j = mat_compt; j < width-mat_compt; j++) {
+
+                int red_sum = 0;
+                int green_sum = 0;
+                int blue_sum = 0;
+
+                for (int k = 0; k < matrix_size; k++) {
+                    for (int l = 0; l < matrix_size; l++) {
+                        if (i<mat_compt){
+                            red_sum += kernel[k][l] * Color.red(pixels[(i + Math.abs(mat_compt - k)) * width + (j - mat_compt + l)]);
+                            green_sum += kernel[k][l] * Color.green(pixels[(i + Math.abs(mat_compt - k)) * width + (j - mat_compt + l)]);
+                            blue_sum += kernel[k][l] * Color.blue(pixels[(i + Math.abs(mat_compt - k)) * width + (j - mat_compt + l)]);
+                        }else if (i>=height-mat_compt){
+                            red_sum += kernel[k][l] * Color.red(pixels[(i - Math.abs(mat_compt - k)) * width + (j - mat_compt + l)]);
+                            green_sum += kernel[k][l] * Color.green(pixels[(i - Math.abs(mat_compt - k)) * width + (j - mat_compt + l)]);
+                            blue_sum += kernel[k][l] * Color.blue(pixels[(i - Math.abs(mat_compt - k)) * width + (j - mat_compt + l)]);
+                        }/*else if (j<mat_compt &&(i>=mat_compt && i<height-mat_compt)){
+                            red_sum += kernel[k][l] * Color.red(pixels[(i - mat_compt + k) * width + (j + Math.abs(mat_compt - l))]);
+                            green_sum += kernel[k][l] * Color.green(pixels[(i - mat_compt + k) * width + (j + Math.abs(mat_compt - l))]);
+                            blue_sum += kernel[k][l] * Color.blue(pixels[(i - mat_compt + k) * width + (j + Math.abs(mat_compt - l))]);
+                        }else if (j>=width-mat_compt && (i>=mat_compt && i<height-mat_compt)){
+                            red_sum += kernel[k][l] * Color.red(pixels[(i - mat_compt + k) * width + (j - Math.abs(mat_compt - l))]);
+                            green_sum += kernel[k][l] * Color.green(pixels[(i - mat_compt + k) * width + (j - Math.abs(mat_compt - l))]);
+                            blue_sum += kernel[k][l] * Color.blue(pixels[(i - mat_compt + k) * width + (j - Math.abs(mat_compt - l))]);
+                        }*/
+                        else{
+                            red_sum += kernel[k][l] * Color.red(pixels[(i - mat_compt + k) * width + (j - mat_compt + l)]);
+                            green_sum += kernel[k][l] * Color.green(pixels[(i - mat_compt + k) * width + (j - mat_compt + l)]);
+                            blue_sum += kernel[k][l] * Color.blue(pixels[(i - mat_compt + k) * width + (j - mat_compt + l)]);
+                        }
+                    }
+                }
+
+                if (factor != 0) {
+                    red = red_sum / factor;
+                    green = green_sum / factor;
+                    blue = blue_sum / factor;
+                } else {
+                    red = red_sum;
+                    green = green_sum;
+                    blue = blue_sum;
+                }
+                if (red > max) {
+                    red = max;
+                }
+                if (red < 0) {
+                    red = 0;
+                }
+                if (green < 0) {
+                    green = 0;
+                }
+                if (blue < 0) {
+                    blue = 0;
+                }
+                if (green > max) {
+                    green = max;
+                }
+                if (blue > max) {
+                    blue = max;
+                }
+                pixelsN[i*width + j] = Color.rgb(red, green, blue);
+            }
+        }
+
+        return setBitmapRGB(bitmap,pixelsN);
+    }
+
+
+
+    /**
+     *
+     * Permet d'appliquer un filtre qui a pour facteur 0, gère les valeurs négatives.
+     * @param kernel
+     * @param matrix_size
+     * @return
+     */
+    static float[] convolute2(Bitmap bitmap, int[][] kernel, int matrix_size) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = getBitmapRGB(bitmap);
+        int mat_compt = matrix_size / 2;
+        float[] result = new float[width*height - 2*mat_compt];
+
+        for (int i = mat_compt; i < height-mat_compt; i++) {
+            for (int j = mat_compt; j < width-mat_compt; j++) {
+
+                float gray_sum = 0;
+
+                for (int k = 0; k < matrix_size; k++) {
+                    for (int l = 0; l < matrix_size; l++) {
+                        gray_sum += kernel[k][l] * Color.red(pixels[(i - mat_compt + k) * width + (j - mat_compt + l)]);
+                    }
+                }
+
+                result[i*width+j] = gray_sum;
+            }
+        }
+
+        float min = result[0];
+        float max = result[0];
+
+        for (int i=1; i<result.length ; i++){
+            if (result[i]<min){
+                min = result[i];
+            }
+            if (result[i]>max){
+                max = result[i];
+            }
+        }
+
+        for (int i = 0; i<result.length;i++){
+            result[i] = ((result[i]-min)/(max-min))*255;
+        }
+
+        return result;
+    }
+
+
+
+    /**
+     * Cette fonction permet d'appliquer le résultat des deux convolutions de Sobel à l'image.
+     * @param sobel1
+     * @param sobel2
+     */
+    static Bitmap sobel(Bitmap bitmap, float[] sobel1, float[] sobel2){
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] val = new int[sobel1.length];
+        int[] pixelsN = new int[width*height];
+        bitmap.getPixels(pixelsN, 0, width, 0, 0, width, height);
+        for (int i=0; i<sobel1.length; i++){
+            val[i] = (int)Math.sqrt(sobel1[i]*sobel1[i]+sobel2[i]*sobel2[i]);
+            if (val[i]>255){
+                val[i] = 255;
+            }
+            pixelsN[i+1] = Color.rgb(val[i],val[i],val[i]);
+        }
+        return setBitmapRGB(bitmap,pixelsN);
+    }
+
+
+
+    /**
+     * Permet d'appliquer le résultat du filtre Laplacien à l'image.
+     * @param lap
+     */
+    static Bitmap laplacien(Bitmap bitmap, float [] lap){
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixelsN = getBitmapRGB(bitmap);
+        bitmap.getPixels(pixelsN, 0, width, 0, 0, width, height);
+        for (int i=0; i<lap.length; i++){
+            pixelsN[i+1] = Color.rgb((int)lap[i],(int)lap[i],(int)lap[i]);
+        }
+        return setBitmapRGB(bitmap, pixelsN);
+    }
+
 }
