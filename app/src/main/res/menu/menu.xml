@@ -43,6 +43,9 @@
             <item android:id="@+id/sepia"
                   android:title="@string/message_Sepia"
                   android:onClick="onOptionsItem"/>
+            <item android:id="@+id/old"
+                  android:title="@string/message_Old"
+                  android:onClick="onOptionsItem"/>
         </menu>
     </item>
 
@@ -57,7 +60,6 @@
                   android:onClick="onOptionsItem"/>
         </menu>
     </item>
-
 
     <item android:id="@+id/brightness"
           android:title="@string/message_Brightness"

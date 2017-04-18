@@ -1,19 +1,27 @@
 package com.example.katell.myapplication;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Matrix;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.util.Pools;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.example.katell.myapplication.SeekBar.OnSeekBarChangeListenerWithArray;
@@ -22,8 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import static android.graphics.Bitmap.createBitmap;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,14 +44,14 @@ public class MainActivity extends AppCompatActivity {
     private ImageView imageView;
 
     /**
-     * Tableau de pixels qui correspond à la precedente bitmap
-     * permet d'enlever le filtre precedent
+     * Tableau de pixels qui correspond à la bitmap initiale
+     * permet d'enlever tous les filtres
      */
     public int[] bitmapInit;
 
     /**
-     * la seekBar qui est utilisé dans différents cas :
-     * pour la luminosité ou le contraste
+     * La seekBar qui est utilisé dans différents cas :
+     * pour la luminosité ou le contraste par exemple
      */
     private SeekBar seekBar;
 
@@ -56,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar seekBar2;
 
 
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,24 +77,45 @@ public class MainActivity extends AppCompatActivity {
 
         //imageView : initialisation
         imageView = (ImageView) findViewById(R.id.imageView);
+
+        /*DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int height = displayMetrics.heightPixels;
+        int width = displayMetrics.widthPixels;
+
+        imageView.getLayoutParams().height = height;
+        imageView.getLayoutParams().width = width;*/
+
+
         BitmapFactory.Options option = new BitmapFactory.Options();
-        bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.icon,option); //hamster : nom de l'image affiché au lancement de l'application
+        bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.icon,option);
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+
+        //float scaleW = ((float) width)/bitmap.getWidth();
+        //float scaleH = ((float) width * bitmap.getHeight()) /bitmap.getWidth();
+        //Matrix matrix = new Matrix();
+        //matrix.postScale(scaleW, scaleH);
+        //bitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix, true);
+
+
         imageView.setImageBitmap(bitmap);
 
+
+        //Permet de gérer le zoom
         ZoomInZoomOut zoom = new ZoomInZoomOut();
         imageView.setOnTouchListener(zoom);
 
+        //Permet de récupérer les pixels de l'image pour ensuite pouvoir réinitialiser si besoin
         recover();
     }
 
 
 
     /**
-     * Permet de relier le fichier menu.xml pour en donner un menu sur l'application
+     * Permet de relier le fichier menu.xml pour avoir un menu sur l'application
      * On transforme le xml vers un format plus intéressant (ici une activité)
-     * @param menu
-     * @return true
+     * @param menu la menu que l'on veut avoir
+     * @return true (car tout ce passe bien)
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -100,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Redirection de l'action quand un item du menu a été pressé
-     * @param item
+     * @param item l'item qui a été pressé
      */
     public void onOptionsItem(MenuItem item) {
         //Permet de réinitialiser tous les éléments suite à une utilisation
@@ -115,13 +144,13 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             //pour griser
             case R.id.gray:
-                toGray();
+                bitmap = Algorithm.toGray(bitmap);
                 break;
 
             //pour appliquer une teinte aléatoire
             case R.id.random:
                 int hue = (int) (Math.random() * 360);
-                toColorize(hue);
+                bitmap = Algorithm.toColorize(bitmap, hue);
                 break;
 
             //pour appliquer une teinte rouge
@@ -131,7 +160,12 @@ public class MainActivity extends AppCompatActivity {
 
             //pour appliquer une teinte sepia
             case R.id.sepia:
-                sepia();
+                bitmap = Algorithm.sepia(bitmap);
+                break;
+
+            //pour vieillir l'image
+            case R.id.old:
+                old();
                 break;
 
             //permet de ne garder qu'une seule couleur avec une SeekBar
@@ -156,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
 
             //pour l'égalisation d'histogramme lent
             case R.id.histogram:
-                histogram();
+                bitmap = Algorithm.histogram(bitmap);
                 break;
 
             //pour la surexposition
@@ -207,18 +241,11 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    /**
-     * Permet de griser l'image
-     */
-    private void toGray() {
-        bitmap = Algorithm.toGray(bitmap);
-    }
-
-
 
     /**
-     ********* Teinte **********
+     * Applique une teinte à l'image
      * Ici la méthode permet d'afficher les différents éléments utiles à l'utilisateur
+     * Et de lancer les algorithmes utiles
      */
     private void colorize() {
         //configurer la seekBar
@@ -236,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
                     hsv[1] = 1;
                     hsv[2] = 1;
                     int color = Algorithm.HSVToColor(hsv);
+                    //permet d'avoir la seekBar qui change couleur en fonction de progress
                     seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
                     bitmap = Algorithm.toColorize(bitmap,progress);
                 }
@@ -250,18 +278,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void toColorize(float hue) {
-        bitmap = Algorithm.toColorize(bitmap, hue);
-    }
-
-
 
     /**
-     * l'image passe avec une teinte sepia
-     * l'algo est basé sur celui de la teinte
+     * Pour vieillir une image
+     * Teinte l'image en sepia
+     * Lui ajoute du bruit
+     * Rajoute une tâche de café en haut à gauche de l'image
+     * Abime les bords de l'image
      */
-    private void sepia() {
-        //images pour l'algo
+    private void old() {
+        //images pour les algos
         Bitmap bmStain = BitmapFactory.decodeResource(getResources(), R.drawable.tache_cafe);
         Bitmap bmNoise = BitmapFactory.decodeResource(getResources(), R.drawable.bruit);
 
@@ -269,13 +295,12 @@ public class MainActivity extends AppCompatActivity {
         bitmap = Algorithm.fusionNoise(bitmap,bmNoise);
         bitmap = Algorithm.fusion(bitmap,bmStain,0,0,2);
         bitmap = Algorithm.crop(bitmap);
-
     }
 
 
 
     /**
-     * ****** ISOLATION DE COULEUR********
+     * Isolation de couleur avec des SeekBars
      * Ici la méthode permet d'afficher les différents éléments utiles à l'utilisateur
      * seekBar : gère la teinte à garder
      * seekBar2 : gère la tolérance
@@ -287,6 +312,7 @@ public class MainActivity extends AppCompatActivity {
         seekBar2.setVisibility(View.VISIBLE);
         seekBar2.setMax(100);
         seekBar2.setProgress(30);
+        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_compare_arrows_black_24dp));
 
         int[] pixels = Algorithm.getBitmapRGB(bitmap);
 
@@ -299,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
                     hsv[0] = progress;
                     hsv[1] = 1;
                     hsv[2] = 1;
-                    int color = Algorithm.HSVToColor(hsv);
+                    int color = Color.HSVToColor(hsv);
                     seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
                     bitmap = Algorithm.isolateColor(bitmap,progress,seekBar2.getProgress(),getPixels());
                 }
@@ -339,19 +365,14 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setVisibility(View.VISIBLE);
         seekBar.setMax(100);
         seekBar.setProgress(30);
+        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_compare_arrows_black_24dp));
 
         int[] pixels = Algorithm.getBitmapRGB(bitmap);
 
         //gerer les actions de la seekBar
         seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixels){
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {}
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(final SeekBar seekBar) {
+            public void onProgressChanged(final SeekBar seekBar, int progress, boolean fromUser) {
                 imageView.setOnTouchListener(new View.OnTouchListener(){
                     @Override
                     public boolean onTouch(View v, MotionEvent event){
@@ -367,9 +388,8 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-
-
     }
+
 
 
     /**
@@ -392,12 +412,6 @@ public class MainActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 bitmap = Algorithm.brightness(bitmap, progress, getBrightness()); //getBrightness est dans la classe OnSeekBarChangeListenerWithArray
             }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 
@@ -433,23 +447,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
-    }
-
-
-
-    /**
-     * Egalisation d'histogramme pour une image en couleur
-     */
-    private void histogram() {
-        bitmap = Algorithm.histogram(bitmap);
-
     }
 
 
@@ -475,12 +473,6 @@ public class MainActivity extends AppCompatActivity {
                     bitmap = Algorithm.overexposure(bitmap, progress, getPixels());
                 }
             }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 
@@ -513,19 +505,33 @@ public class MainActivity extends AppCompatActivity {
                     imageView.setImageBitmap(bitmap);
                 }
             }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 
 
 
     /**
-     * Début de l'accès à une image à partir de la caméra
+     * Permet de récupérer l'image initiale
+     */
+    private void recover() {
+        bitmapInit = Algorithm.getBitmapRGB(bitmap);
+    }
+
+
+
+    /**
+     * Permet de réinitialiser l'image
+     */
+    private void init() {
+        bitmap = Algorithm.setBitmapRGB(bitmap,bitmapInit);
+        imageView.setImageBitmap(bitmap);
+    }
+
+
+
+    /**
+     ********* ACCEDER A LA CAMERA *********
+     * Inspiré grandement de Android Developers
      */
     public static final int CAMERA_PERMISSION = 0;
     String mCurrentPhotoPath;
@@ -533,7 +539,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * Permet de gerer le permissions car l'API 23 ne le fait pas automatiquement
+     * Permet de gerer les permissions car l'API 23 ne le fait pas automatiquement
      * @param requestCode
      * @param permissions
      * @param grantResults
@@ -541,31 +547,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 5) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Now user should be able to use camera
-            } else {
-                // Your app will not have this permission. Turn off all functions
-                // that require this permission or it will force close like your
-                // original question
-            }
-        }
     }
 
 
     /**
-     * Permet de gerer les permissions et aussi l'existance ou non de la caméra.
+     * Permet de gerer les permissions et l'existance ou non de la caméra.
      */
     private void takePhoto() {
         PackageManager pm = this.getPackageManager();
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA},
-                    CAMERA_PERMISSION);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION);
         }
+
         if (pm.hasSystemFeature(PackageManager.FEATURE_CAMERA)){
             dispatchTakePictureIntent();
         } else {
@@ -581,13 +574,13 @@ public class MainActivity extends AppCompatActivity {
      * @throws IOException
      */
     private File createImageFile() throws IOException {
-        // Create an image file name
+        //Creer un nom de fichier
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(imageFileName, ".jpg", storageDir);
 
-        // Save a file: path for use with ACTION_VIEW intents
+        // Sauvegarder le fichier : chemin à utiliser
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -599,16 +592,16 @@ public class MainActivity extends AppCompatActivity {
      */
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // Ensure that there's a camera activity to handle the intent
+
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            // Create the File where the photo should go
             File photoFile = null;
+
             try {
                 photoFile = createImageFile();
             } catch (IOException ex) {
                 Toast.makeText(MainActivity.this, "Erreur au moment de creer le fichier", Toast.LENGTH_LONG).show();
             }
-            // Continue only if the File was successfully created
+
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(getApplicationContext(), "com.example.katell.fileprovider", photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
@@ -634,17 +627,17 @@ public class MainActivity extends AppCompatActivity {
         int targetW = imageView.getWidth();
         int targetH = imageView.getHeight();
 
-        // Get the dimensions of the bitmap
+        //Avoir les dimensions de bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
 
-        // Determine how much to scale down the image
+        //Determine de combien réduire l'image
         int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
 
-        // Decode the image file into a Bitmap sized to fill the View
+        // Decoder le fichier pour que la bitmap remplisse l'ImageView
         bmOptions.inJustDecodeBounds = false;
         bmOptions.inSampleSize = scaleFactor;
         bmOptions.inPurgeable = true;
@@ -655,25 +648,4 @@ public class MainActivity extends AppCompatActivity {
 
         recover();
     }
-
-
-
-    /**
-     * Permet de récupérer l'image initiale
-     */
-    private void recover() {
-        bitmapInit = Algorithm.getBitmapRGB(bitmap);
-    }
-
-
-
-    /**
-     * Permet de réinitialiser l'image
-     */
-    private void init() {
-        bitmap = Algorithm.setBitmapRGB(bitmap,bitmapInit);
-        imageView.setImageBitmap(bitmap);
-    }
-
-
 }

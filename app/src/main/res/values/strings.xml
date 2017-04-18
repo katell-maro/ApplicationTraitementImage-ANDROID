@@ -2,27 +2,33 @@
 <resources>
 
     <string name="app_name">PhotArt</string>
-    <string name="message_Gray">Nuances de gris</string>
-    <string name="message_Random">Teinte Random</string>
-    <string name="message_Hamster">Hamster</string>
-    <string name="message_Smarties">Smarties</string>
-    <string name="message_Contrast">Contraste</string>
-    <string name="message_Sepia">Effet vieilli</string>
-    <string name="message_Filtre">Filtre</string>
-    <string name="message_Teinte">Teinte</string>
+
     <string name="message_ChangeImage">Changer image</string>
     <string name="message_Photo">Prendre une photo</string>
-    <string name="message_Brightness">Luminosite</string>
-    <string name="message_Histogram">Egalisation de histogramme</string>
-    <string name="message_IsolateColor">Isolation d une couleur</string>
-    <string name="message_Button">OK</string>
-    <string name="message_Tolerance">Tolérance :</string>
-    <string name="message_Overexposure">Surexposition</string>
-    <string name="message_Init">Image initiale</string>
+    <string name="message_Hamster">Hamster</string>
+    <string name="message_Smarties">Smarties</string>
     <string name="message_Lenna">Image peu contraste</string>
-    <string name="message_Thresholding">Seuillage</string>
+
+    <string name="message_Init">Image initiale</string>
+
+    <string name="message_Filtre">Filtre</string>
+    <string name="message_Teinte">Teinte</string>
+    <string name="message_Random">Teinte Random</string>
+    <string name="message_Gray">Nuances de gris</string>
+    <string name="message_Sepia">Sepia</string>
+    <string name="message_Old">Effet vieilli</string>
+
+    <string name="message_IsolateColor">Isolation d une couleur</string>
     <string name="message_IsolateColorBar">Par barre</string>
     <string name="message_IsolateColorTouch">Par le toucher</string>
-    <string name="message_Home">Maison</string>
+
+    <string name="message_Brightness">Luminosite</string>
+    <string name="message_Contrast">Contraste</string>
+    <string name="message_Histogram">Egalisation de histogramme</string>
+
+    <string name="message_Overexposure">Surexposition</string>
+
+    <string name="message_Thresholding">Seuillage</string>
+
 
 </resources>
