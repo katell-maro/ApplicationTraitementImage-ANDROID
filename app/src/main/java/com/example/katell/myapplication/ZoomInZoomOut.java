@@ -134,26 +134,4 @@ public class ZoomInZoomOut extends MainActivity implements OnTouchListener {
         float y = event.getY(0) + event.getY(1);
         point.set(x / 2, y / 2);
     }
-
-
-
-    /**
-     * Permet de savor si l'image sort du cadre
-     */
-    private boolean inScreen(final ImageView image) {
-        //Bitmap bitmap = ((BitmapDrawable) image.getDrawable()).getBitmap();
-        int top = image.getTop();
-        int bottom = image.getBottom();
-        int left = image.getLeft();
-        int right = image.getRight();
-
-        Log.i("top", String.valueOf(top));
-        Log.i("bottom", String.valueOf(bottom));
-        Log.i("left", String.valueOf(left));
-        Log.i("right", String.valueOf(right));
-
-
-        return true;
-    }
-
 }

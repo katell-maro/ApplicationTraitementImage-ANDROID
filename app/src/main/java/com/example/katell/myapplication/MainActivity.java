@@ -141,6 +141,8 @@ public class MainActivity extends AppCompatActivity {
         //Permet de réinitialiser tous les éléments suite à une utilisation
         seekBar.setVisibility(View.INVISIBLE);
         seekBar.setProgress(0);
+        int color = Color.parseColor("#ffcc5c"); //la couleur initiale
+        seekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
         seekBar2.setVisibility(View.INVISIBLE);
         seekBar2.setProgress(0);
         ZoomInZoomOut zoom = new ZoomInZoomOut();
@@ -267,6 +269,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.moyenneur2:
                 int[][] matrix = Algorithm.moyenneur(5);
                 bitmap = Algorithm.convolute(bitmap,matrix,5);
+                break;
 
             //convolution sobel
             case R.id.sobel:
@@ -413,30 +416,19 @@ public class MainActivity extends AppCompatActivity {
      * Permet de ne garder que la couleur touchée
      */
     private void isolateColorTouch() {
-        seekBar.setVisibility(View.VISIBLE);
-        seekBar.setMax(100);
-        seekBar.setProgress(30);
-        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_compare_arrows_black_24dp));
+        final int[] pixels = Algorithm.getBitmapRGB(bitmap);
 
-        int[] pixels = Algorithm.getBitmapRGB(bitmap);
-
-        //gerer les actions de la seekBar
-        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixels){
+        imageView.setOnTouchListener(new View.OnTouchListener(){
             @Override
-            public void onProgressChanged(final SeekBar seekBar, int progress, boolean fromUser) {
-                imageView.setOnTouchListener(new View.OnTouchListener(){
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event){
-                        int x = (int)event.getX();
-                        int y = (int)event.getY();
-                        int pixel = bitmap.getPixel(x,y);
-                        float[] hsv = new float[3];
-                        Algorithm.colorToHSV(pixel,hsv);
-                        bitmap = Algorithm.isolateColor(bitmap,(int) hsv[0],seekBar.getProgress(),getPixels());
-                        imageView.setImageBitmap(bitmap);
-                        return false;
-                    }
-                });
+            public boolean onTouch(View v, MotionEvent event){
+                int x = (int)event.getX();
+                int y = (int)event.getY();
+                int pixel = bitmap.getPixel(x,y);
+                float[] hsv = new float[3];
+                Algorithm.colorToHSV(pixel,hsv);
+                bitmap = Algorithm.isolateColor(bitmap,(int) hsv[0],30,pixels);
+                imageView.setImageBitmap(bitmap);
+                return false;
             }
         });
     }
@@ -572,8 +564,10 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setVisibility(View.VISIBLE);
         seekBar.setMax(3);
         seekBar.setProgress(1);
+        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_filter_list_black_24dp));
         seekBar2.setVisibility(View.VISIBLE);
         seekBar2.setMax(5);
+        seekBar2.setThumb(getResources().getDrawable(R.drawable.ic_repeat_black_24dp));
 
         //gerer les actions de la seekBar
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
@@ -622,6 +616,7 @@ public class MainActivity extends AppCompatActivity {
         //configurer les seekBars
         seekBar.setVisibility(View.VISIBLE);
         seekBar.setMax(5);
+        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_repeat_black_24dp));
 
         //gerer les actions de la seekBar
         seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(){
@@ -840,6 +835,12 @@ public class MainActivity extends AppCompatActivity {
             File sdImageMainDirectory = new File(root, fname);
             outputFileUri = Uri.fromFile(sdImageMainDirectory);
             fOut = new FileOutputStream(sdImageMainDirectory);
+
+            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            Uri contentUri = Uri.fromFile(root);
+            mediaScanIntent.setData(contentUri);
+            this.sendBroadcast(mediaScanIntent);
+
         } catch (Exception e) {
             Toast.makeText(this, "Error occured", Toast.LENGTH_SHORT).show();
         }
@@ -851,6 +852,7 @@ public class MainActivity extends AppCompatActivity {
         }
         Toast.makeText(this, "Image saved in Images_PhotArt", Toast.LENGTH_SHORT).show();
     }
+
 
 
     /**

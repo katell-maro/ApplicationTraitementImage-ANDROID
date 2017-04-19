@@ -677,9 +677,12 @@ class Algorithm {
 
 
     /**
-     * Permet d'appliquer une convolution avec une matrice de n'importe quelle dimension. Ne gère que les valeurs positives. Bords calculés avec le miroir de l'image.
-     *
-     * @param kernel
+     * Permet d'appliquer une convolution avec une matrice de n'importe quelle dimension.
+     * Ne gère que les valeurs positives. Bords calculés avec le miroir de l'image.
+     * @param bitmap la bitmap à modifier
+     * @param kernel la matrice utilisée
+     * @param matrix_size la taille de la matrice
+     * @return la bitmap une fois modifiée
      */
     static Bitmap convolute(Bitmap bitmap, int[][] kernel, int matrix_size) {
         int width = bitmap.getWidth();
@@ -768,8 +771,8 @@ class Algorithm {
 
 
     /**
-     *
      * Permet d'appliquer un filtre qui a pour facteur 0, gère les valeurs négatives.
+     * @param bitmap
      * @param kernel
      * @param matrix_size
      * @return
@@ -819,8 +822,10 @@ class Algorithm {
 
     /**
      * Cette fonction permet d'appliquer le résultat des deux convolutions de Sobel à l'image.
+     * @param bitmap l'image que l'on veut modifier
      * @param sobel1
      * @param sobel2
+     * @return la bitmap une fois modifée
      */
     static Bitmap sobel(Bitmap bitmap, float[] sobel1, float[] sobel2){
         int width = bitmap.getWidth();
@@ -842,7 +847,9 @@ class Algorithm {
 
     /**
      * Permet d'appliquer le résultat du filtre Laplacien à l'image.
+     * @param bitmap l'image à modifier
      * @param lap
+     * @return l'image une fois modifiée
      */
     static Bitmap laplacien(Bitmap bitmap, float [] lap){
         int width = bitmap.getWidth();

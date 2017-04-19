@@ -46,16 +46,6 @@ public class OnSeekBarChangeListenerWithArray implements SeekBar.OnSeekBarChange
 
     /**
      * Constructeur
-     * @param brightness tableau qui représente la luminosité de chaque pixel
-     */
-    protected OnSeekBarChangeListenerWithArray(float[] brightness) {
-        this.pixels = null;
-        this.brightness = brightness;
-    }
-
-
-    /**
-     * Constructeur
      * @param pixels tableau des pixels RGB de l'image
      */
     protected OnSeekBarChangeListenerWithArray(int[] pixels, float[] brightness) {
