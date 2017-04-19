@@ -19,8 +19,8 @@
             <item android:id="@+id/smarties"
                   android:title="@string/message_Smarties"
                   android:onClick="onOptionsItem"/>
-            <item android:id="@+id/lenna"
-                  android:title="@string/message_Lenna"
+            <item android:id="@+id/notContrast"
+                  android:title="@string/message_NotContrast"
                   android:onClick="onOptionsItem"/>
         </menu>
     </item>
@@ -69,6 +69,9 @@
         <menu>
             <item android:id="@+id/moyenneur"
                   android:title="@string/message_Moyenneur"
+                  android:onClick="onOptionsItem"/>
+            <item android:id="@+id/moyenneur2"
+                  android:title="@string/message_Moyenneur2"
                   android:onClick="onOptionsItem"/>
             <item android:id="@+id/gaussien"
                   android:title="@string/message_Gaussien"

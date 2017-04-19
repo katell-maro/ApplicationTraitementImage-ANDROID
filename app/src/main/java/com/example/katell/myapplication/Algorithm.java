@@ -238,20 +238,21 @@ class Algorithm {
     static Bitmap isolateColor(Bitmap bitmap, int hue, int interval, int[] pixelsInit) {
         int[] pixels = pixelsInit.clone();
         boolean intervalWithZero = false;
-        int min = (hue-interval)%360;
-        int max = (hue+interval)%360;
+        int min = (hue-interval)%360; //-30
+        int max = (hue+interval)%360; //30
         if (min<0) {
             intervalWithZero = true;
-            min = min+360;
+            min = min+360; //330
         }
         if (max<0) {
             intervalWithZero = true;
             max = max+360;
         }
         if (min>max) {
+            intervalWithZero = true;
             int tmp = min;
-            min = max;
-            max = tmp;
+            min = max; //30
+            max = tmp; //330
         }
 
         for (int i=0 ; i<pixels.length ; i++) {
@@ -279,19 +280,25 @@ class Algorithm {
      * Permet de changer la luminosité d'une image
      * @param bitmap l'image dont on veut changer la luminosité
      * @param value la valeur de changement de luminosité (au dessus de 50, elle augmente, en dessous, elle diminue)
+     * @param pixelsInit le tableau de pixels en rgb de l'image initiale
      * @param pixelsHSV le tableau de l'image initiale avec la luminosité de chaque pixels (ie hsv[2])
      * @return l'image une fois modifiée
      */
-    static Bitmap brightness(Bitmap bitmap, int value, float[] pixelsHSV) {
+    static Bitmap brightness(Bitmap bitmap, int value, int[] pixelsInit, float[] pixelsHSV) {
         float valueF = value-50;
-        int[] pixels = getBitmapRGB(bitmap);
+        Log.i("value",String.valueOf(valueF));
+        int[] pixels = pixelsInit.clone();
         float[] hsv = new float[3];
 
         for (int i = 0; i < pixels.length; i++) {
             colorToHSV(pixels[i], hsv);
-            hsv[2] = pixelsHSV[i] + valueF/100;
-            if (hsv[2]<0) { hsv[2] = 0; }
-            if (hsv[2]>1) { hsv[2] = 1; }
+            hsv[2] = pixelsHSV[i] + valueF / 100;
+            if (hsv[2] < 0) {
+                hsv[2] = 0;
+            }
+            if (hsv[2] > 1) {
+                hsv[2] = 1;
+            }
             pixels[i] = HSVToColor(hsv);
         }
 
@@ -576,9 +583,22 @@ class Algorithm {
         if (width2<width || height2<height) {
             int[] pixels = getBitmapRGB(noise);
             int[] pixelsFinal = new int[width*height];
-            for (int i=0 ; i<pixelsFinal.length-1 ; i++) {
-                pixelsFinal[i] = pixels[i%pixels.length];
+
+            for (int i=0 ; i<height ; i++) {
+                for (int j=0 ; j<width ; j++) {
+
+                    if (i>=height2) {
+                        int diff = (i-height2)%height2;
+                        pixelsFinal[i*width+j] = pixelsFinal[(i-2*diff-1)*width+j];
+                    } else if (j>=width2) {
+                        int diff = (j-width2)%width2;
+                        pixelsFinal[i*width+j] = pixels[(i*width2+j - 2*diff -1)];
+                    } else {
+                        pixelsFinal[i * width + j] = pixels[i * width2 + j];
+                    }
+                }
             }
+
             bm = Bitmap.createBitmap(pixelsFinal,width,height, Bitmap.Config.ARGB_8888);
         } else {
             bm = Bitmap.createBitmap(noise, 0, 0, width, height);

@@ -92,26 +92,18 @@ public class MainActivity extends AppCompatActivity {
         //imageView : initialisation
         imageView = (ImageView) findViewById(R.id.imageView);
 
-        /*DisplayMetrics displayMetrics = new DisplayMetrics();
+        //Permet de définir un taille pour l'imageView
+        DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int height = displayMetrics.heightPixels;
         int width = displayMetrics.widthPixels;
-
         imageView.getLayoutParams().height = height;
-        imageView.getLayoutParams().width = width;*/
+        imageView.getLayoutParams().width = width;
 
-
+        //Permet de mettre une bitmap dans l'imageView
         BitmapFactory.Options option = new BitmapFactory.Options();
         bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.hamster,option);
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-
-        //float scaleW = ((float) width)/bitmap.getWidth();
-        //float scaleH = ((float) width * bitmap.getHeight()) /bitmap.getWidth();
-        //Matrix matrix = new Matrix();
-        //matrix.postScale(scaleW, scaleH);
-        //bitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix, true);
-
-
         imageView.setImageBitmap(bitmap);
 
 
@@ -156,6 +148,50 @@ public class MainActivity extends AppCompatActivity {
 
 
         switch (item.getItemId()) {
+            //permet de mettre une image (hamster)
+            case R.id.hamster:
+                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.hamster);
+                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                imageView.setImageBitmap(bitmap);
+                recover();
+                break;
+
+            //permet de mettre une image (smarties)
+            case R.id.smarties:
+                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.smarty);
+                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                imageView.setImageBitmap(bitmap);
+                recover();
+                break;
+
+            //permet de mettre une image (image peu contrastée)
+            case R.id.notContrast:
+                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pas_contraste);
+                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                imageView.setImageBitmap(bitmap);
+                recover();
+                break;
+
+            //permet de prendre une photo
+            case R.id.photo:
+                takePhoto();
+                break;
+
+            //charger une image de la galerie
+            case R.id.gallery:
+                LoadGallery();
+                break;
+
+            //Sauvegarder une image
+            case R.id.save:
+                SaveImage(bitmap);
+                break;
+
+            //Permet d'afficher l'image initiale
+            case R.id.init:
+                init();
+                break;
+
             //pour griser
             case R.id.gray:
                 bitmap = Algorithm.toGray(bitmap);
@@ -180,6 +216,16 @@ public class MainActivity extends AppCompatActivity {
             //pour vieillir l'image
             case R.id.old:
                 old();
+                break;
+
+            //pour la surexposition
+            case R.id.overexposure:
+                overexposure();
+                break;
+
+            //pour le seuillage
+            case R.id.thresholding:
+                thresholding();
                 break;
 
             //permet de ne garder qu'une seule couleur avec une SeekBar
@@ -207,45 +253,6 @@ public class MainActivity extends AppCompatActivity {
                 bitmap = Algorithm.histogram(bitmap);
                 break;
 
-            //pour la surexposition
-            case R.id.overexposure:
-                overexposure();
-                break;
-
-            //pour le seuillage
-            case R.id.thresholding:
-                thresholding();
-                break;
-
-            //permet de mettre une image (hamster)
-            case R.id.hamster:
-                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.hamster);
-                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                imageView.setImageBitmap(bitmap);
-                recover();
-                break;
-
-            //permet de mettre une image (smarties)
-            case R.id.smarties:
-                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.smarty);
-                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                imageView.setImageBitmap(bitmap);
-                recover();
-                break;
-
-            //permet de mettre une image (Lenna)
-            case R.id.lenna:
-                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pas_contraste);
-                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                imageView.setImageBitmap(bitmap);
-                recover();
-                break;
-
-            //permet de prendre une photo
-            case R.id.photo:
-                takePhoto();
-                break;
-
             //convolution gaussienne
             case R.id.gaussien:
                 gaussien();
@@ -255,6 +262,11 @@ public class MainActivity extends AppCompatActivity {
             case R.id.moyenneur:
                 moyenneur();
                 break;
+
+            //convolution moyenneur2
+            case R.id.moyenneur2:
+                int[][] matrix = Algorithm.moyenneur(5);
+                bitmap = Algorithm.convolute(bitmap,matrix,5);
 
             //convolution sobel
             case R.id.sobel:
@@ -274,21 +286,6 @@ public class MainActivity extends AppCompatActivity {
                 float [] laplacien_res = Algorithm.convolute2(bitmap, laplacien,3);
                 bitmap = Algorithm.laplacien(bitmap, laplacien_res);
                 bitmap = Algorithm.histogram(bitmap);
-                break;
-
-            //charger une image de la galerie
-            case R.id.gallery:
-                LoadGallery();
-                break;
-
-            //Sauvegarder une image
-            case R.id.save:
-                SaveImage(bitmap);
-                break;
-
-            //Permet d'afficher l'image initiale
-            case R.id.init:
-                init();
                 break;
         }
     }
@@ -366,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
         seekBar2.setVisibility(View.VISIBLE);
         seekBar2.setMax(100);
         seekBar2.setProgress(30);
-        seekBar.setThumb(getResources().getDrawable(R.drawable.ic_compare_arrows_black_24dp));
+        seekBar2.setThumb(getResources().getDrawable(R.drawable.ic_compare_arrows_black_24dp));
 
         int[] pixels = Algorithm.getBitmapRGB(bitmap);
 
@@ -459,12 +456,13 @@ public class MainActivity extends AppCompatActivity {
 
         //avoir le tableau de pixels de l'image originale
         float[] pixelsHSV = Algorithm.getBitmapBrightness(bitmap);
+        int[] pixels = Algorithm.getBitmapRGB(bitmap);
 
         //gerer les actions de la seekBar
-        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixelsHSV){
+        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListenerWithArray(pixels, pixelsHSV){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                bitmap = Algorithm.brightness(bitmap, progress, getBrightness()); //getBrightness est dans la classe OnSeekBarChangeListenerWithArray
+                bitmap = Algorithm.brightness(bitmap, progress, getPixels(), getBrightness()); //getBrightness est dans la classe OnSeekBarChangeListenerWithArray
             }
         });
     }
