@@ -3,6 +3,7 @@ package com.example.katell.myapplication;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -76,8 +77,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
-    @TargetApi(Build.VERSION_CODES.KITKAT)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -836,21 +835,23 @@ public class MainActivity extends AppCompatActivity {
             outputFileUri = Uri.fromFile(sdImageMainDirectory);
             fOut = new FileOutputStream(sdImageMainDirectory);
 
+            //pour mettre l'image dans la galerie
             Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
             Uri contentUri = Uri.fromFile(root);
             mediaScanIntent.setData(contentUri);
             this.sendBroadcast(mediaScanIntent);
 
+            try {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+                fOut.flush();
+                fOut.close();
+                Toast.makeText(this, "Image saved in Images_PhotArt", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {}
+
         } catch (Exception e) {
             Toast.makeText(this, "Error occured", Toast.LENGTH_SHORT).show();
         }
-        try {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
-            fOut.flush();
-            fOut.close();
-        } catch (Exception e) {
-        }
-        Toast.makeText(this, "Image saved in Images_PhotArt", Toast.LENGTH_SHORT).show();
+
     }
 
 
